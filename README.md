@@ -11,6 +11,36 @@ bytecode through a compiler whose layers are themselves proved.
 Documentation: [veritylang.com](https://veritylang.com) · Paper:
 [verity.pdf](https://lfglabs.dev/papers/verity.pdf) · MIT licensed.
 
+## About this fork (`mab-xyz/verity`, branch `ours`)
+
+`ours` is upstream [`lfglabs-dev/verity`](https://github.com/lfglabs-dev/verity)
+`main` plus the fixes below. Each fix is on its own `fix/*` branch, merged here
+with `--no-ff`, and sent upstream as a separate PR, one at a time. All of them
+come from compiling every example in `Contracts/` to Yul and running the
+compiled bytecode on a local anvil chain.
+
+| Fix | Branch | Upstream | What it changes |
+|---|---|---|---|
+| Yul builtin identifiers | `fix/reject-yul-builtin-identifiers` | [lfglabs-dev/verity#2669](https://github.com/lfglabs-dev/verity/pull/2669) | Parameters and locals named after Yul keywords or EVM builtins (`gas`, `balance`, …) are rejected at compile time. Before, they produced Yul that solc refused. Unblocks the three `ProxyUpgradeability*Smoke` contracts, `ModifiesSmoke` and `EffectCompositionSmoke`. |
+| Discard binders | `fix/discard-binders-outside-reserved-prefix` | queued (after #2669) | `let _ ← call` and `let (_, x) ← …` no longer generate `__`-prefixed binders, which the compiler's own reserved-prefix check rejected. Also repairs the outdated `TypedInterfaceCallSmoke` / `ExternalCallInBodySmoke` fixtures. |
+| `mulDiv512Up` overflow | `fix/muldiv512-up-overflow-revert` | queued | The ceil helper reverts when the rounded-up quotient is `2^256`, as `evalMulDiv512Up` specifies. Before, it silently returned `0`. Regression test: `test/MulDiv512Smoke.t.sol`. |
+| Linker | `fix/linker-creation-code-and-one-line-functions` | queued | One-line library functions no longer swallow the next definition. Library functions called from creation code are linked into it too. |
+
+Related upstream PR, not part of this branch:
+[lfglabs-dev/EVMYulLean#12](https://github.com/lfglabs-dev/EVMYulLean/pull/12)
+makes an out-of-bounds Yul `RETURNDATACOPY` halt, as on the EVM.
+
+Known issues not yet fixed here:
+- Signed checked arithmetic reverts with `Error(string)` instead of Solidity's `Panic(uint256)`.
+- `tryCall (selfCall f)` compiles to a 0-gas call without calldata, so the catch branch is always taken.
+- `return ()` in a `Unit` function is rejected.
+- `mulmod` is missing from the static gas model.
+- 45 example specs still do not compile, and CI does not compile every example.
+
+Sync with upstream:
+`git fetch https://github.com/lfglabs-dev/verity main && git merge FETCH_HEAD`,
+then re-run the gates in `AGENTS.md`.
+
 ## Guarantees
 
 - **Layer 1** (DSL → `CompilationModel`): per-contract bridge theorems.
