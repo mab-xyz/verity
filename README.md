@@ -25,13 +25,13 @@ compiled bytecode on a local anvil chain.
 | Discard binders | `fix/discard-binders-outside-reserved-prefix` | queued (after #2669) | `let _ ← call` and `let (_, x) ← …` no longer generate `__`-prefixed binders, which the compiler's own reserved-prefix check rejected. Also repairs the outdated `TypedInterfaceCallSmoke` / `ExternalCallInBodySmoke` fixtures. |
 | `mulDiv512Up` overflow | `fix/muldiv512-up-overflow-revert` | queued | The ceil helper reverts when the rounded-up quotient is `2^256`, as `evalMulDiv512Up` specifies. Before, it silently returned `0`. Regression test: `test/MulDiv512Smoke.t.sol`. |
 | Linker | `fix/linker-creation-code-and-one-line-functions` | queued | One-line library functions no longer swallow the next definition. Library functions called from creation code are linked into it too. |
+| Checked-arithmetic panic ABI | `fix/signed-checked-arithmetic-panic-abi` | queued | Signed (`Int256`) and narrow checked arithmetic revert with Solidity's `Panic(uint256)` (0x11 overflow, 0x12 division by zero), as unsigned arithmetic already did, instead of `Error("Panic(0x11): …")`. Regression test: `test/Int256CheckedSmoke.t.sol`, which checks exact parity with Solidity. |
 
 Related upstream PR, not part of this branch:
 [lfglabs-dev/EVMYulLean#12](https://github.com/lfglabs-dev/EVMYulLean/pull/12)
 makes an out-of-bounds Yul `RETURNDATACOPY` halt, as on the EVM.
 
 Known issues not yet fixed here:
-- Signed checked arithmetic reverts with `Error(string)` instead of Solidity's `Panic(uint256)`.
 - `tryCall (selfCall f)` compiles to a 0-gas call without calldata, so the catch branch is always taken.
 - `return ()` in a `Unit` function is rejected.
 - `mulmod` is missing from the static gas model.
