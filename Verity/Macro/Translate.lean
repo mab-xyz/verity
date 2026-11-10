@@ -505,6 +505,12 @@ private partial def validateEffectStmtExprTypes
         (← inferPureExprType fields constDecls immutableDecls externalDecls params locals offset)
       requireWordLikeType value "memory-store value"
         (← inferPureExprType fields constDecls immutableDecls externalDecls params locals value)
+  | `(term| copyBytes $data:term $destOffset:term) => do
+      match directParamNameWithType? params data with
+      | some (_, .bytes) => pure ()
+      | _ => throwErrorAt data "copyBytes expects a Bytes parameter"
+      requireWordLikeType destOffset "copyBytes destination offset"
+        (← inferPureExprType fields constDecls immutableDecls externalDecls params locals destOffset)
   | `(term| calldatacopy $destOffset:term $sourceOffset:term $size:term)
     | `(term| returndataCopy $destOffset:term $sourceOffset:term $size:term)
     | `(term| returnDataCopy($destOffset, $sourceOffset, $size)) => do
@@ -1081,6 +1087,14 @@ private def translateEffectStmt
       `(Compiler.CompilationModel.Stmt.tstore
           $(← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals offset)
           $(← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals value))
+  | `(term| copyBytes $data:term $destOffset:term) =>
+      match directParamNameWithType? params data with
+      | some (name, .bytes) =>
+          `(Compiler.CompilationModel.Stmt.calldatacopy
+              $(← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals destOffset)
+              (Compiler.CompilationModel.Expr.param $(strTerm s!"{name}_data_offset"))
+              (Compiler.CompilationModel.Expr.param $(strTerm s!"{name}_length")))
+      | _ => throwErrorAt data "copyBytes expects a Bytes parameter"
   | `(term| calldatacopy $destOffset:term $sourceOffset:term $size:term) =>
       `(Compiler.CompilationModel.Stmt.calldatacopy
           $(← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals destOffset)
@@ -3449,6 +3463,14 @@ private def rewriteTypedInterfaceCall?
         (List.flatten ([ $[$rewritten],* ] : List (List Uint256))) $adv $arity $siteId)
     some <$> withDeclaredExternalResultDecoder ext resultTy call
 
+/-- `Compiler.Modules.Create2SSTORE2.deployModule`, however it is qualified. -/
+private def isCreate2DeployModule (stx : Term) : Bool :=
+  match stripParens stx with
+  | `(term| $id:ident) =>
+      let n := id.getId.toString
+      n == "Compiler.Modules.Create2SSTORE2.deployModule" || n.endsWith "Create2SSTORE2.deployModule"
+  | _ => false
+
 private def rewriteLinkedCallTerm
     (externalDecls : Array ExternalDecl) (params : Array ParamDecl)
     (adv : Term) (stx : Term)
@@ -3634,8 +3656,21 @@ private def rewriteLinkedCallTerm
       `(term| returndataCopyLive $destOffset $sourceOffset $size)
   | `(term| memoryStore($offset, $value)) =>
       `(term| mstore (externalArgWord $offset) (externalArgWord $value))
+  -- Memory reads and hashing act on the modelled word-addressed memory, as the
+  -- compiled code does (the pure `mload`/`keccak256` forms are placeholders).
+  | `(term| mload $offset:term) =>
+      `(term| mloadLive $offset)
+  | `(term| keccak256 $offset:term $size:term) =>
+      `(term| keccak256Live $offset $size)
+  | `(term| calldatacopy $destOffset:term $sourceOffset:term $size:term) =>
+      `(term| calldatacopyLive $destOffset $sourceOffset $size)
   | `(term| ecmCall $moduleFactory:term $args:term) =>
       let argList ← expectTermListLiteral args
+      -- CREATE2 has an exact model (EIP-1014 address over the hashed initcode).
+      if isCreate2DeployModule moduleFactory && argList.size == 4 then
+        `(term| create2Live ($(argList[0]!) : Uint256) ($(argList[1]!) : Uint256)
+            ($(argList[2]!) : Uint256) ($(argList[3]!) : Uint256))
+      else
       let argWords ← argList.mapM (executableEcmArgWords params)
       `(term| ecmCallWords (($moduleFactory) "__verity_ecm_result") $adv
         (List.flatten ([ $[$argWords],* ] : List (List Uint256))))
@@ -3713,6 +3748,9 @@ private def isLiveStateExternalCall (stx : Term) (registryMode : Bool := false) 
   | `(term| returnDataCopy($_, $_, $_))
   | `(term| returndataCopy $_ $_ $_)
   | `(term| memoryStore($_, $_))
+  | `(term| mload $_)
+  | `(term| keccak256 $_ $_)
+  | `(term| calldatacopy $_ $_ $_)
   | `(term| ecmCall $_ $_)
   | `(term| ecmDo $_ $_)
   | `(term| externalCallBind $_ $_ $_)
