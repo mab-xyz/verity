@@ -28,6 +28,8 @@ compiled bytecode on a local anvil chain.
 | Checked-arithmetic panic ABI | `fix/signed-checked-arithmetic-panic-abi` | queued | Signed (`Int256`) and narrow checked arithmetic revert with Solidity's `Panic(uint256)` (0x11 overflow, 0x12 division by zero), as unsigned arithmetic already did, instead of `Error("Panic(0x11): …")`. Regression test: `test/Int256CheckedSmoke.t.sol`, which checks exact parity with Solidity. |
 | `selfCall` ABI encoding | `fix/selfcall-abi-encoding` | queued | `tryCall (selfCall f(args))` ABI-encodes `f`'s selector and arguments and CALLs this contract with all available gas. Before, it was a 0-gas CALL with empty calldata, so the catch branch always ran. Regression test: `test/TryCatchSmoke.t.sol`, which checks the values the Lean file proves. |
 | `return ()` in `Unit` functions | `fix/unit-return-early-exit` | queued | `return ()` exits a `Unit` function early (EVM `stop()` externally, `leave` in an internal helper) instead of being rejected as an empty tuple return. Regression test: `test/UnitReturnSmoke.t.sol`. |
+| Whole tuple/struct parameters | `fix/reject-whole-tuple-param-value` | queued | A tuple or struct parameter is never emitted as a bare Yul name: as a value it is rejected with a hint to use its components, and passed whole to a typed interface call it is ABI-encoded as its words inline. Unblocks `TupleSmoke`, `Uint8Smoke`, `OverloadSignatureEncodingSmoke`, `ReturnCallTupleParamSmoke`, `ReturnCallNestedStructParamSmoke`. |
+| ECM result variables | `fix/ecm-result-vars-bound` | queued | The compiler rejects an external call module whose declared result variables are not bound by a top-level `let` in its Yul. This found and fixed `Hashing.abiEncodeStaticArray`, whose result was scoped inside a block and never compiled through solc. |
 
 Related upstream PR, not part of this branch:
 [lfglabs-dev/EVMYulLean#12](https://github.com/lfglabs-dev/EVMYulLean/pull/12)
@@ -37,7 +39,7 @@ Known issues not yet fixed here:
 - Revert payloads are not observable in the proof semantics, so a wrong revert ABI (as in #12) cannot break a theorem. A plan exists; no code yet.
 - Low-level `call` / `staticcall` / `delegatecall` have a placeholder meaning in the EDSL (the sum of their arguments) and none in the source semantics, so theorems about their result say nothing about the chain. A plan exists; no code yet.
 - `mulmod` is missing from the static gas model.
-- 45 example specs still do not compile, and CI does not compile every example.
+- Some example specs still do not compile, and CI does not compile every example to Yul or run solc on it.
 
 Sync with upstream:
 `git fetch https://github.com/lfglabs-dev/verity main && git merge FETCH_HEAD`,
