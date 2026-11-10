@@ -35,6 +35,7 @@ makes an out-of-bounds Yul `RETURNDATACOPY` halt, as on the EVM.
 
 Known issues not yet fixed here:
 - Revert payloads are not observable in the proof semantics, so a wrong revert ABI (as in #12) cannot break a theorem. A plan exists; no code yet.
+- Low-level `call` / `staticcall` / `delegatecall` have a placeholder meaning in the EDSL (the sum of their arguments) and none in the source semantics, so theorems about their result say nothing about the chain. A plan exists; no code yet.
 - `mulmod` is missing from the static gas model.
 - 45 example specs still do not compile, and CI does not compile every example.
 
