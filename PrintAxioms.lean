@@ -7642,7 +7642,9 @@ Compiler.Proofs.YulGeneration.Backends.Native.step_calldatacopy_nil_invalid
 Compiler.Proofs.YulGeneration.Backends.Native.step_calldatacopy_singleton_invalid
 Compiler.Proofs.YulGeneration.Backends.Native.step_calldatacopy_pair_invalid
 Compiler.Proofs.YulGeneration.Backends.Native.step_calldatacopy_overarity_invalid
+Compiler.Proofs.YulGeneration.Backends.Native.step_returndatacopy_eq
 Compiler.Proofs.YulGeneration.Backends.Native.step_returndatacopy_ok
+Compiler.Proofs.YulGeneration.Backends.Native.step_returndatacopy_out_of_bounds
 Compiler.Proofs.YulGeneration.Backends.Native.step_returndatacopy_nil_invalid
 Compiler.Proofs.YulGeneration.Backends.Native.step_returndatacopy_singleton_invalid
 Compiler.Proofs.YulGeneration.Backends.Native.step_returndatacopy_pair_invalid
@@ -7841,6 +7843,7 @@ Compiler.Proofs.YulGeneration.Backends.Native.primCall_returndatasize_ok
 Compiler.Proofs.YulGeneration.Backends.Native.primCall_returndatasize_any_ok
 Compiler.Proofs.YulGeneration.Backends.Native.primCall_calldatacopy_ok
 Compiler.Proofs.YulGeneration.Backends.Native.primCall_returndatacopy_ok
+Compiler.Proofs.YulGeneration.Backends.Native.primCall_returndatacopy_out_of_bounds
 Compiler.Proofs.YulGeneration.Backends.Native.primCall_pop_ok
 Compiler.Proofs.YulGeneration.Backends.Native.primCall_stop_ok
 Compiler.Proofs.YulGeneration.Backends.Native.primCall_return_ok
@@ -12072,4 +12075,4 @@ run_cmd do
     for line in lines do
       liftIO <| IO.println line
 
--- Total: 11239 theorems/lemmas (8739 public, 2500 private, 0 sorry'd)
+-- Total: 11242 theorems/lemmas (8742 public, 2500 private, 0 sorry'd)
