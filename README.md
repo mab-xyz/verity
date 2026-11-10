@@ -30,6 +30,7 @@ compiled bytecode on a local anvil chain.
 | `return ()` in `Unit` functions | `fix/unit-return-early-exit` | queued | `return ()` exits a `Unit` function early (EVM `stop()` externally, `leave` in an internal helper) instead of being rejected as an empty tuple return. Regression test: `test/UnitReturnSmoke.t.sol`. |
 | Whole tuple/struct parameters | `fix/reject-whole-tuple-param-value` | queued | A tuple or struct parameter is never emitted as a bare Yul name: as a value it is rejected with a hint to use its components, and passed whole to a typed interface call it is ABI-encoded as its words inline. Unblocks `TupleSmoke`, `Uint8Smoke`, `OverloadSignatureEncodingSmoke`, `ReturnCallTupleParamSmoke`, `ReturnCallNestedStructParamSmoke`. |
 | ECM result variables | `fix/ecm-result-vars-bound` | queued | The compiler rejects an external call module whose declared result variables are not bound by a top-level `let` in its Yul. This found and fixed `Hashing.abiEncodeStaticArray`, whose result was scoped inside a block and never compiled through solc. |
+| `lake build` builds everything | `fix/lake-default-builds-every-module` | queued | A bare `lake build` used to build only `Verity`, never `Contracts/` or `Compiler/`, and 39 modules were built by nothing at all. All libraries are now default targets, and `make check` runs `scripts/check_lake_default_coverage.py`, which fails if any module falls outside what `lake build` builds. |
 
 Related upstream PR, not part of this branch:
 [lfglabs-dev/EVMYulLean#12](https://github.com/lfglabs-dev/EVMYulLean/pull/12)
