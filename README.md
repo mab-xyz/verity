@@ -27,13 +27,13 @@ compiled bytecode on a local anvil chain.
 | Linker | `fix/linker-creation-code-and-one-line-functions` | queued | One-line library functions no longer swallow the next definition. Library functions called from creation code are linked into it too. |
 | Checked-arithmetic panic ABI | `fix/signed-checked-arithmetic-panic-abi` | queued | Signed (`Int256`) and narrow checked arithmetic revert with Solidity's `Panic(uint256)` (0x11 overflow, 0x12 division by zero), as unsigned arithmetic already did, instead of `Error("Panic(0x11): …")`. Regression test: `test/Int256CheckedSmoke.t.sol`, which checks exact parity with Solidity. |
 | `selfCall` ABI encoding | `fix/selfcall-abi-encoding` | queued | `tryCall (selfCall f(args))` ABI-encodes `f`'s selector and arguments and CALLs this contract with all available gas. Before, it was a 0-gas CALL with empty calldata, so the catch branch always ran. Regression test: `test/TryCatchSmoke.t.sol`, which checks the values the Lean file proves. |
+| `return ()` in `Unit` functions | `fix/unit-return-early-exit` | queued | `return ()` exits a `Unit` function early (EVM `stop()` externally, `leave` in an internal helper) instead of being rejected as an empty tuple return. Regression test: `test/UnitReturnSmoke.t.sol`. |
 
 Related upstream PR, not part of this branch:
 [lfglabs-dev/EVMYulLean#12](https://github.com/lfglabs-dev/EVMYulLean/pull/12)
 makes an out-of-bounds Yul `RETURNDATACOPY` halt, as on the EVM.
 
 Known issues not yet fixed here:
-- `return ()` in a `Unit` function is rejected.
 - Revert payloads are not observable in the proof semantics, so a wrong revert ABI (as in #12) cannot break a theorem. A plan exists; no code yet.
 - `mulmod` is missing from the static gas model.
 - 45 example specs still do not compile, and CI does not compile every example.
