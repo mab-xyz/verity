@@ -35,9 +35,12 @@ compiled bytecode on a local anvil chain.
 | Composite interface returns | `fix/interface-composite-return-local` | queued (after struct returns) | `let r ← pool.f` where `f` returns a tuple, struct or fixed array binds every ABI word; before, only the first word was decoded. `return r` re-encodes all of them. Regression test: `test/InterfaceCompositeReturnSmoke.t.sol`. |
 | `ecmDo` dynamic arguments | `fix/ecmdo-dynamic-args` | queued | `ecmDo` passes a bytes/string/array parameter as `data_offset, length`, like `ecmCall`, `ecmBind` and the Lean model; before, it passed one word. Regression test: `test/DirectDynamicECMArgSmoke.t.sol`. |
 
-Related upstream PR, not part of this branch:
+Related upstream PR, not yet part of this branch:
 [lfglabs-dev/EVMYulLean#12](https://github.com/lfglabs-dev/EVMYulLean/pull/12)
-makes an out-of-bounds Yul `RETURNDATACOPY` halt, as on the EVM.
+makes an out-of-bounds Yul `RETURNDATACOPY` halt, as on the EVM. Branch
+`fix/evmyul-returndatacopy-halt` pins it and updates the proofs (full build
+green, no new axioms), but is not merged: `generate_evmyullean_fork_audit.py
+--check` rejects any semantic-change commit in the EvmYul fork.
 
 Known issues not yet fixed here:
 - Revert payloads are not observable in the proof semantics, so a wrong revert ABI (as in #12) cannot break a theorem. A plan exists; no code yet.
