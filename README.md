@@ -34,13 +34,11 @@ compiled bytecode on a local anvil chain.
 | Struct returns | `fix/struct-return-values` | queued | A function returning a struct (or a static tuple or fixed array) compiles: the flattened words are its ABI encoding, and the internal copy gets one return slot per word. Before, every struct return was rejected. Regression test: `test/NamedStructReturnSmoke.t.sol`, byte-identical to Solidity. |
 | Composite interface returns | `fix/interface-composite-return-local` | queued (after struct returns) | `let r ← pool.f` where `f` returns a tuple, struct or fixed array binds every ABI word; before, only the first word was decoded. `return r` re-encodes all of them. Regression test: `test/InterfaceCompositeReturnSmoke.t.sol`. |
 | `ecmDo` dynamic arguments | `fix/ecmdo-dynamic-args` | queued | `ecmDo` passes a bytes/string/array parameter as `data_offset, length`, like `ecmCall`, `ecmBind` and the Lean model; before, it passed one word. Regression test: `test/DirectDynamicECMArgSmoke.t.sol`. |
+| `RETURNDATACOPY` past the buffer halts | `fix/evmyul-returndatacopy-halt` | queued (after EVMYulLean#12) | EvmYul's Yul semantics zero-padded an out-of-bounds `RETURNDATACOPY`, so proofs admitted runs a real EVM aborts (EIP-211). The pin moves to the fix; the affected proofs carry an in-bounds hypothesis. The fork audit now admits a semantic EvmYul change only as an EVM-conformance fix with an EIP and tests. |
 
-Related upstream PR, not yet part of this branch:
-[lfglabs-dev/EVMYulLean#12](https://github.com/lfglabs-dev/EVMYulLean/pull/12)
-makes an out-of-bounds Yul `RETURNDATACOPY` halt, as on the EVM. Branch
-`fix/evmyul-returndatacopy-halt` pins it and updates the proofs (full build
-green, no new axioms), but is not merged: `generate_evmyullean_fork_audit.py
---check` rejects any semantic-change commit in the EvmYul fork.
+EvmYul is pinned to `mab-xyz/EVMYulLean@d742f03` (the fix in
+[lfglabs-dev/EVMYulLean#12](https://github.com/lfglabs-dev/EVMYulLean/pull/12))
+until upstream merges it.
 
 Known issues not yet fixed here:
 - Revert payloads are not observable in the proof semantics, so a wrong revert ABI (as in #12) cannot break a theorem. A plan exists; no code yet.
