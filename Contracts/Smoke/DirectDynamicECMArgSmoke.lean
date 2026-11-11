@@ -50,17 +50,17 @@ verity_contract DirectDynamicECMArgSmoke where
 /-- Executable ECM calls use the same synthetic `data_offset, length` key as
 the model for direct bytes, string, and dynamic-array parameters. -/
 example :
-    ((DirectDynamicECMArgSmoke.fromCall (ByteArray.mk #[1, 2, 3])).run defaultState).getState.calls.head?.map
+    ((DirectDynamicECMArgSmoke.fromCall .stub (ByteArray.mk #[1, 2, 3])).run defaultState).getState.calls.head?.map
         (fun call => call.calldata) = some [0, 3] := by
   decide
 
 example :
-    ((DirectDynamicECMArgSmoke.fromDo "verity").run
+    ((DirectDynamicECMArgSmoke.fromDo .stub "verity").run
       defaultState).getState.calls.head?.map (fun call => call.calldata) = some [0, 6] := by
   decide
 
 example :
-    ((DirectDynamicECMArgSmoke.fromBind #[4, 5]).run
+    ((DirectDynamicECMArgSmoke.fromBind .stub #[4, 5]).run
       defaultState).getState.calls.head?.map (fun call => call.calldata) = some [0, 2] := by
   decide
 
