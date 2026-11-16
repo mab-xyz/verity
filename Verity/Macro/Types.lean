@@ -40,6 +40,8 @@ inductive MappingKeyType where
   | address
   | uint256
   | bytes32
+  /-- Solidity `bytes1`..`bytes31`; the key word is the value left-aligned. -/
+  | bytesN (bytes : Nat)
   deriving BEq
 
 structure StructMemberDecl where

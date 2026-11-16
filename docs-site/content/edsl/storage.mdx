@@ -35,6 +35,18 @@ setMapping2 allowances owner spender (allow - amount)
 The `addressToWord` / `wordToAddress` helpers convert between the two
 representations; the `*Addr` mapping variants apply them automatically.
 
+Declared mapping keys (`K₁ → … → Uint256`, `MappingStruct(K,[…])`,
+`MappingStruct2(K₁,K₂,[…])`) are `Address`, `Uint256`, `Bytes32`, or a fixed-bytes
+type `Bytes1` … `Bytes31`. A fixed-bytes key is hashed left-aligned in its
+32-byte word, as in Solidity (`keccak256(abi.encode(bytes4 key, slot))`).
+Mappings outside the `Address`/`Uint256` single-key and `Address → Address`
+shapes are read and written with `getMappingN` / `setMappingN`:
+
+```verity
+setMappingN bySelector [selector] value
+let value <- getMappingN bySelector [selector]
+```
+
 Declare storage fields, including struct, packed-word, and ERC-7201 namespaced
 forms, in the contract's `storage` block. The full grammar lives in
 [`Verity/Macro/Syntax.lean`](https://github.com/lfglabs-dev/verity/blob/main/Verity/Macro/Syntax.lean);

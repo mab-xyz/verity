@@ -302,7 +302,8 @@ reads (`HashedCoherentOn`, preserved by aligned writes under a finite
 `LayoutNonAlias` certificate), without `solidityMappingSlot_injective`.
 
 **Keys.** `getMappingN` / `setMappingN` take a `List MappingKeyWord`;
-`Address`, `Uint256` and `Bytes32` coerce through `StorageKey.toWord`, so
+`Address`, `Uint256`, `Bytes32` and `BytesN n` (`Bytes1`..`Bytes31`, left-aligned
+like Solidity) coerce through `StorageKey.toWord`, so
 `getMappingN withdrawsRequestsByEpoch [user, epoch]` typechecks.
 
 **Transient chains.** A `transient` mapping chain routes to

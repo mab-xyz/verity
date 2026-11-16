@@ -19,7 +19,13 @@ def storageTypeFromSyntax
     | `(term| Address) => pure .address
     | `(term| Uint256) => pure .uint256
     | `(term| Bytes32) => pure .bytes32
-    | _ => throwErrorAt stx "unsupported mapping key type; expected Address, Uint256, or Bytes32"
+    | `(term| $id:ident) =>
+        match valueTypeFromSyntax.parseNarrowTypeSuffix "Bytes" id.getId.eraseMacroScopes.getString! with
+        | some bytes =>
+            if 1 ≤ bytes && bytes ≤ 31 then pure (.bytesN bytes)
+            else throwErrorAt stx s!"invalid Solidity fixed-bytes width {bytes}; expected Bytes1 through Bytes32"
+        | none => throwErrorAt stx "unsupported mapping key type; expected Address, Uint256, Bytes32, or Bytes1 through Bytes31"
+    | _ => throwErrorAt stx "unsupported mapping key type; expected Address, Uint256, Bytes32, or Bytes1 through Bytes31"
 
   let structMemberFromSyntax (stx : TSyntax `verityStructMember) : CommandElabM StructMemberDecl := do
     match stx with
@@ -141,6 +147,9 @@ def modelMappingKeyTypeTerm : MappingKeyType → CommandElabM Term
   | .address => `(Compiler.CompilationModel.MappingKeyType.address)
   | .uint256 => `(Compiler.CompilationModel.MappingKeyType.uint256)
   | .bytes32 => `(Compiler.CompilationModel.MappingKeyType.bytes32)
+  -- A `bytesN` key reaches the compiled code as the left-aligned word, exactly
+  -- like a `bytes32` key (`ParamLoading`), so it shares the `bytes32` lowering.
+  | .bytesN _ => `(Compiler.CompilationModel.MappingKeyType.bytes32)
 
 def storageTypeMappingKeyTypes? : StorageType → Option (List MappingKeyType)
   | .mappingAddressToUint256 => some [.address]
@@ -166,6 +175,7 @@ def storageKeyTypeContractTerm : MappingKeyType → CommandElabM Term
   | .address => `(Address)
   | .uint256 => `(Uint256)
   | .bytes32 => `(Bytes32)
+  | .bytesN bytes => `(Verity.Core.BytesN $(natTerm bytes))
 
 def modelStructMemberTerm (member : StructMemberDecl) : CommandElabM Term := do
   let packedTerm ←
