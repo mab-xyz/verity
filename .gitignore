@@ -29,3 +29,6 @@ cache/
 .sandboxed-sh_context.json
 __pycache__/
 .vercel
+
+# Yul mutant written by test/StructBytesMemberCopySmoke.t.sol
+artifacts/struct-bytes-member-mutant/
