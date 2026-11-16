@@ -127,6 +127,7 @@ def stmtLowLevelMechanicsStructural : Stmt → List String
         exprLowLevelMechanicsStructural s ++ exprLowLevelMechanicsStructural sz)
   | .revertReturndata => ["revertReturndata"]
   | .revertMemory o sz => exprLowLevelMechanicsStructural o ++ exprLowLevelMechanicsStructural sz
+  | .returnReturndata => ["returnReturndata"]
   | .unsafeYul frag => frag.mechanics.map LowLevelMechanic.toReportString
   | .letVar _ v | .assignVar _ v | .setStorage _ v | .setStorageAddr _ v
   | .setImmutable _ v | .setStorageWord _ _ v | .storageArrayPush _ v

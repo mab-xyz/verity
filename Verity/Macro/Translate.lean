@@ -85,6 +85,39 @@ private def requireSelfCallAttemptForPayload (attempt : Term) (errName : Ident) 
       throwErrorAt errName
         "`catch err =>` needs a `selfCall` attempt: a word attempt has no revert payload"
 
+/-- `returnReturndata` ends the call, but its executable form (`Contracts.returnReturndata`) is
+a no-op. It is therefore accepted only in tail position of a function body: the last statement
+of its path, directly or under `if`/`else`, with nothing after the enclosing statements up to the
+end of the function, and never inside a loop or another construct. Then the executable runs
+nothing after it, and its post-state is the bytecode's. `isTail` says whether `elems` ends the
+function body. -/
+private partial def checkReturnReturndataTailPosition
+    (elems : Array (TSyntax `doElem)) (isTail : Bool) : CommandElabM Unit := do
+  for elem in elems, i in [0:elems.size] do
+    let tailHere := isTail && i + 1 == elems.size
+    let checkSeq (seq : TSyntax `Lean.Parser.Term.doSeq) : CommandElabM Unit := do
+      match seq with
+      | `(doSeq| $[$inner:doElem]*) => checkReturnReturndataTailPosition inner tailHere
+      | _ =>
+          if syntaxMentionsReturnReturndata seq.raw then
+            throwErrorAt seq returnReturndataTailError
+    match elem with
+    | `(doElem| returnReturndata) =>
+        unless tailHere do throwErrorAt elem returnReturndataTailError
+    | `(doElem| if $_:term then $thenSeq:doSeq else $elseSeq:doSeq) =>
+        checkSeq thenSeq
+        checkSeq elseSeq
+    | `(doElem| if $_:term then $thenSeq:doSeq) =>
+        checkSeq thenSeq
+    | _ =>
+        if syntaxMentionsReturnReturndata elem.raw then
+          throwErrorAt elem returnReturndataTailError
+where
+  returnReturndataTailError : String :=
+    "`returnReturndata` ends the call: it is only allowed as the last statement of a Unit " ++
+      "function body, directly or under if/else, with nothing after it on any path " ++
+      "(not in loops, constructors or modifiers)"
+
 mutual
 private partial def returnTypeContainsEnum : ValueType → Bool
   | .enum _ _ => true
@@ -631,7 +664,7 @@ private partial def validateEffectStmtExprTypes
       validateLinkedExternalCallArgs fields constDecls immutableDecls externalDecls params locals
         extName ext.params args
       let _ ← translateLinkedExternalCallArgs fields constDecls immutableDecls params locals args
-  | `(term| revertEmpty) | `(term| revertReturndata) =>
+  | `(term| revertEmpty) | `(term| revertReturndata) | `(term| returnReturndata) =>
       pure ()
   | `(term| revertBytes $name:term) =>
       unless (memoryBytesLocal? locals name).isSome do
@@ -685,7 +718,9 @@ private def validateFunctionBodyExprTypes
               fn.params
         | _, _, _ => fn.params
       let _ ← validateDoElemsExprTypes fn.name fn.returnTy fields constDecls immutableDecls externalDecls errorDecls eventDecls functions validationParams #[] elems
-      pure ()
+      if fn.returnTy != .unit && syntaxMentionsReturnReturndata fn.body.raw then
+        throwErrorAt fn.body s!"function '{fn.name}' uses `returnReturndata`, which ends the call with the forwarded bytes: its return type must be Unit"
+      checkReturnReturndataTailPosition elems true
   | _ => throwErrorAt fn.body "function body must be a do block"
 
 private def validateConstantExprTypes
@@ -714,7 +749,7 @@ private def validateConstructorBodyExprTypes
   match ctor.body with
   | `(term| do $[$elems:doElem]*) =>
       let _ ← validateDoElemsExprTypes "constructor" .unit fields constDecls immutableDecls externalDecls errorDecls eventDecls functions ctor.params #[] elems
-      pure ()
+      checkReturnReturndataTailPosition elems false
   | _ => throwErrorAt ctor.body "constructor body must be a do block"
 
 private def translateERC20BindStmt?
@@ -1217,6 +1252,9 @@ private def translateEffectStmt
       `(Compiler.CompilationModel.Stmt.revertMemory
           (Compiler.CompilationModel.Expr.localVar $(strTerm (toString ptr.getId)))
           (Compiler.CompilationModel.Expr.localVar $(strTerm (toString len.getId))))
+
+  | `(term| returnReturndata) =>
+      `(Compiler.CompilationModel.Stmt.returnReturndata)
   | `(term| revertBytes $name:term) =>
       translateRevertBytesStmt locals name
   | `(term| returnValues $values:term) =>
@@ -7576,7 +7614,7 @@ def validateFunctionDeclsPublic
     match modDecl.body with
     | `(term| do $[$elems:doElem]*) =>
         let _ ← validateDoElemsExprTypes modDecl.name .unit fields constDecls immutableDecls externalDecls errorDecls eventDecls functions #[] #[] elems
-        pure ()
+        checkReturnReturndataTailPosition elems false
     | _ => throwErrorAt modDecl.body "modifier body must be a do block"
   for fn in functions do
     for param in fn.params do

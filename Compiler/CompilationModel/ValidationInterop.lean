@@ -187,7 +187,7 @@ def validateInteropStmt (context : String) : Stmt → Except String Unit
   | Stmt.revertMemory offset size => do
       validateInteropExpr context offset
       validateInteropExpr context size
-  | Stmt.revertEmpty | Stmt.revertReturndata =>
+  | Stmt.revertEmpty | Stmt.revertReturndata | Stmt.returnReturndata =>
       pure ()
   | Stmt.setMapping _ key value | Stmt.setMappingWord _ key _ value | Stmt.setMappingPackedWord _ key _ _ value | Stmt.setMappingUint _ key value
   | Stmt.setStructMember _ key _ value => do

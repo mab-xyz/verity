@@ -557,6 +557,13 @@ def revertReturndata : Contract Unit := fun state =>
         (.raw (state.rawReturndata.getD
           (Compiler.CompilationModel.Denote.returndataRevertBytes state.returndata)))
         state := rfl
+
+/-- No-op in the executable model: `Contract` cannot halt with a success payload, so the
+forwarded bytes are not exposed here, while the compiled code ends the call with
+`returndatacopy(0, 0, returndatasize())` and `return(0, returndatasize())`. The macro accepts
+`returnReturndata` only in tail position of a `Unit` function body, so nothing runs after it
+here either and the post-state matches the bytecode's. -/
+def returnReturndata : Contract Unit := pure ()
 /-- Executable length surface for `arrayLength`: dynamic ABI values that
 carry a length word (`bytes`, `string`, `T[]`). Deliberately not
 instantiated for word types: `Bytes32` is a reducible abbrev of `Uint256`,
