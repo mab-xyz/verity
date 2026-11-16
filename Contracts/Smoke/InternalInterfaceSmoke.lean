@@ -349,7 +349,7 @@ verity_contract BytesWithCompositeParamRejected where
     pool.submit payload pair
 
 /--
-error: typed interface call 'IPool.submit' takes a Bytes argument, which must be a Bytes parameter of this function or `abiEncodeCall <selector> [items]`
+error: typed interface call 'IPool.submit' takes a Bytes argument, which must be a Bytes parameter of this function, `emptyBytes` or `abiEncodeCall <selector> [items]`
 -/
 #guard_msgs in
 verity_contract BytesArgNotParamRejected where
@@ -366,7 +366,7 @@ verity_contract BytesArgNotParamRejected where
     pool.submit data
 
 /--
-error: abiEncodeCall items must be single-word values or Bytes parameters, got Verity.Macro.ValueType.array (Verity.Macro.ValueType.uint256)
+error: abiEncodeCall items must be single-word values, Bytes parameters or emptyBytes, got Verity.Macro.ValueType.array (Verity.Macro.ValueType.uint256)
 -/
 #guard_msgs in
 verity_contract AbiEncodeCallArrayItemRejected where
@@ -390,6 +390,24 @@ verity_contract AbiEncodeCallOutsideCallRejected where
   function bad (x : Uint256) : Uint256 := do
     let payload := abiEncodeCall 0x12345678 [x]
     return x
+
+/--
+error: abiEncodeCall selector constant 'SEL' must be a numeric literal
+-/
+#guard_msgs in
+verity_contract AbiEncodeCallComputedSelectorRejected where
+  storage
+
+  constants
+    SEL : Uint256 := (add 1 2)
+
+  interfaces
+    interface IPool where
+      function submit(Bytes)
+    end
+
+  function bad (pool : IPool, x : Uint256) : Unit := do
+    pool.submit (abiEncodeCall SEL [x])
 
 /--
 error: bytesWord index must be a numeric literal
