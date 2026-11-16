@@ -1187,7 +1187,8 @@ private def translateEffectStmt
       let _ ← lookupStructMemberDecl fields fieldName memberName false
       `(Compiler.CompilationModel.Stmt.setStructMember
           $(strTerm fieldName)
-          $(← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals key)
+          $(← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals
+              (← checkMappingKeyTerm key))
           $(strTerm memberName)
           $(← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals value))
   | `(term| setStructMember2 $field:term $key1:term $key2:term $member:term $value:term) =>
@@ -1196,8 +1197,10 @@ private def translateEffectStmt
       let _ ← lookupStructMemberDecl fields fieldName memberName true
       `(Compiler.CompilationModel.Stmt.setStructMember2
           $(strTerm fieldName)
-          $(← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals key1)
-          $(← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals key2)
+          $(← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals
+              (← checkMappingKeyTerm key1))
+          $(← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals
+              (← checkMappingKeyTerm key2))
           $(strTerm memberName)
           $(← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals value))
   | _ =>

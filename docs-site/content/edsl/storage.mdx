@@ -38,7 +38,10 @@ representations; the `*Addr` mapping variants apply them automatically.
 Declared mapping keys (`K₁ → … → Uint256`, `MappingStruct(K,[…])`,
 `MappingStruct2(K₁,K₂,[…])`) are `Address`, `Uint256`, `Bytes32`, or a fixed-bytes
 type `Bytes1` … `Bytes31`. A fixed-bytes key is hashed left-aligned in its
-32-byte word, as in Solidity (`keccak256(abi.encode(bytes4 key, slot))`).
+32-byte word, as in Solidity (`keccak256(abi.encode(bytes4 key, slot))`),
+whether it comes from a parameter, a local, a helper result, `narrowBytes`, or a
+`Bytes4` constant (`selector : Bytes4 := 0x12345678` denotes the left-aligned
+word). A bare numeric literal key is rejected; declare a typed constant instead.
 Mappings outside the `Address`/`Uint256` single-key and `Address → Address`
 shapes are read and written with `getMappingN` / `setMappingN`:
 
