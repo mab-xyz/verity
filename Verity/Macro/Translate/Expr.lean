@@ -3330,7 +3330,12 @@ partial def translateConstantExpr
   | some constant =>
       if visiting.contains name then
         throwError s!"constant '{name}' depends on itself recursively"
-      translatePureExprWithTypes fields constDecls immutableDecls #[] #[] constant.body (name :: visiting)
+      let raw ← translatePureExprWithTypes fields constDecls immutableDecls #[] #[] constant.body (name :: visiting)
+      -- A `BytesN` constant denotes its left-aligned word, like a `BytesN`
+      -- parameter; a numeric literal body is the right-aligned payload.
+      match constant.ty with
+      | .bytesN bytes => normalizeTranslatedExprForType (.bytesN bytes) constant.body raw
+      | _ => pure raw
 
 partial def translateLeanExprFromDef
     (fields : Array StorageFieldDecl)
@@ -4236,7 +4241,7 @@ partial def translatePureExprWithTypes
       let _ ← lookupStructMemberDecl fields fieldName memberName false
       `(Compiler.CompilationModel.Expr.structMember
           $(strTerm fieldName)
-          $(← translatePureExprWithTypes fields constDecls immutableDecls params locals key visitingConstants linkedExternalLowerer?)
+          $(← translatePureExprWithTypes fields constDecls immutableDecls params locals (← checkMappingKeyTerm key) visitingConstants linkedExternalLowerer?)
           $(strTerm memberName))
   | `(term| structMember2 $field:term $key1:term $key2:term $member:term) =>
       let fieldName := ← expectStringOrIdent field
@@ -4244,8 +4249,8 @@ partial def translatePureExprWithTypes
       let _ ← lookupStructMemberDecl fields fieldName memberName true
       `(Compiler.CompilationModel.Expr.structMember2
           $(strTerm fieldName)
-          $(← translatePureExprWithTypes fields constDecls immutableDecls params locals key1 visitingConstants linkedExternalLowerer?)
-          $(← translatePureExprWithTypes fields constDecls immutableDecls params locals key2 visitingConstants linkedExternalLowerer?)
+          $(← translatePureExprWithTypes fields constDecls immutableDecls params locals (← checkMappingKeyTerm key1) visitingConstants linkedExternalLowerer?)
+          $(← translatePureExprWithTypes fields constDecls immutableDecls params locals (← checkMappingKeyTerm key2) visitingConstants linkedExternalLowerer?)
           $(strTerm memberName))
   | _ =>
       match ← translateLeanDefCall? fields constDecls immutableDecls #[] params locals stx visitingConstants linkedExternalLowerer? with
@@ -4694,7 +4699,7 @@ def tupleLiteralOrStructValueExprs?
           let _ ← lookupStructMemberDecl fields fieldName memberName false
           `(Compiler.CompilationModel.Expr.structMember
               $(strTerm fieldName)
-              $(← translateExpr key)
+              $(← translateExpr (← checkMappingKeyTerm key))
               $(strTerm memberName))
         pure (some exprs)
     | `(term| structMembers2 $field:term $key1:term $key2:term $members:term) => do
@@ -4708,8 +4713,8 @@ def tupleLiteralOrStructValueExprs?
           let _ ← lookupStructMemberDecl fields fieldName memberName true
           `(Compiler.CompilationModel.Expr.structMember2
               $(strTerm fieldName)
-              $(← translateExpr key1)
-              $(← translateExpr key2)
+              $(← translateExpr (← checkMappingKeyTerm key1))
+              $(← translateExpr (← checkMappingKeyTerm key2))
               $(strTerm memberName))
         pure (some exprs)
     | _ => pure none
@@ -5882,7 +5887,7 @@ def translateBindSource
       let _ ← lookupStructMemberDecl fields fieldName memberName false
       `(Compiler.CompilationModel.Expr.structMember
           $(strTerm fieldName)
-          $(← translateOperand key)
+          $(← translateOperand (← checkMappingKeyTerm key))
           $(strTerm memberName))
   | `(term| structMember2 $field:term $key1:term $key2:term $member:term) =>
       let fieldName := ← expectStringOrIdent field
@@ -5890,8 +5895,8 @@ def translateBindSource
       let _ ← lookupStructMemberDecl fields fieldName memberName true
       `(Compiler.CompilationModel.Expr.structMember2
           $(strTerm fieldName)
-          $(← translateOperand key1)
-          $(← translateOperand key2)
+          $(← translateOperand (← checkMappingKeyTerm key1))
+          $(← translateOperand (← checkMappingKeyTerm key2))
           $(strTerm memberName))
   | `(term| msgSender) | `(term| Verity.msgSender) => `(Compiler.CompilationModel.Expr.caller)
   | `(term| msgValue) | `(term| Verity.msgValue) => `(Compiler.CompilationModel.Expr.msgValue)

@@ -66,4 +66,43 @@ contract PropertyBytesNMappingKeySmokeTest is YulTestBase {
         uint256 actual = abi.decode(ret, (uint256));
         assertEq(actual, expected, "getNested should decode the configured mapping value");
     }
+    // Property 7: setValueAtSelector has no unexpected revert
+    function testAuto_SetValueAtSelector_NoUnexpectedRevert() public {
+        vm.prank(alice);
+        (bool ok,) = target.call(abi.encodeWithSignature("setValueAtSelector(uint256)", uint256(1)));
+        require(ok, "setValueAtSelector reverted unexpectedly");
+    }
+    // Property 8: setEntryAtSelector has no unexpected revert
+    function testAuto_SetEntryAtSelector_NoUnexpectedRevert() public {
+        vm.prank(alice);
+        (bool ok,) = target.call(abi.encodeWithSignature("setEntryAtSelector(uint256)", uint256(1)));
+        require(ok, "setEntryAtSelector reverted unexpectedly");
+    }
+    // Property 9: setValueViaLocal has no unexpected revert
+    function testAuto_SetValueViaLocal_NoUnexpectedRevert() public {
+        vm.prank(alice);
+        (bool ok,) = target.call(abi.encodeWithSignature("setValueViaLocal(bytes4,uint256)", bytes4(uint32(0x01)), uint256(1)));
+        require(ok, "setValueViaLocal reverted unexpectedly");
+    }
+    // Property 10: TODO decode and assert `selectorOf` result
+    function testTODO_SelectorOf_DecodeAndAssert() public {
+        vm.prank(alice);
+        (bool ok, bytes memory ret) = target.call(abi.encodeWithSignature("selectorOf()"));
+        require(ok, "selectorOf reverted unexpectedly");
+        assertEq(ret.length, 32, "selectorOf ABI return length mismatch (expected 32 bytes)");
+        // TODO(#1011): decode `ret` and assert the concrete postcondition from Lean theorem.
+        ret;
+    }
+    // Property 11: setValueViaHelper has no unexpected revert
+    function testAuto_SetValueViaHelper_NoUnexpectedRevert() public {
+        vm.prank(alice);
+        (bool ok,) = target.call(abi.encodeWithSignature("setValueViaHelper(uint256)", uint256(1)));
+        require(ok, "setValueViaHelper reverted unexpectedly");
+    }
+    // Property 12: setValueNarrowed has no unexpected revert
+    function testAuto_SetValueNarrowed_NoUnexpectedRevert() public {
+        vm.prank(alice);
+        (bool ok,) = target.call(abi.encodeWithSignature("setValueNarrowed(uint256,uint256)", uint256(1), uint256(1)));
+        require(ok, "setValueNarrowed reverted unexpectedly");
+    }
 }
