@@ -855,6 +855,7 @@ jobs:
             Contracts.Smoke.Int256CheckedSmoke
             Contracts.Smoke.SelfBalanceSmoke
             Contracts.Smoke.CoinbaseSmoke
+            Contracts.Smoke.FallbackNonReentrantSmoke
             Contracts.Smoke.TryCatchSmoke
             Contracts.Smoke.TryCatchArgSmoke
             Contracts.StringArrayErrorSmoke
@@ -917,6 +918,7 @@ jobs:
             Contracts.Smoke.Int256CheckedSmoke
             Contracts.Smoke.SelfBalanceSmoke
             Contracts.Smoke.CoinbaseSmoke
+            Contracts.Smoke.FallbackNonReentrantSmoke
             Contracts.Smoke.TryCatchSmoke
             Contracts.Smoke.TryCatchArgSmoke
             Contracts.StringArrayErrorSmoke
