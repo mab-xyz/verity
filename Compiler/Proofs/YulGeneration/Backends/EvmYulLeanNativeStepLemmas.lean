@@ -214,6 +214,13 @@ theorem step_blobbasefee_any
       .ok (state, some (EvmYul.UInt256.ofNat state.toState.coinBase.val)) := by
   rfl
 
+theorem step_coinbase_any
+    (state : EvmYul.Yul.State)
+    (values : List EvmYul.UInt256) :
+    EvmYul.step (τ := .Yul) EvmYul.Operation.COINBASE none state values =
+      .ok (state, some (EvmYul.UInt256.ofNat state.toState.coinBase.val)) := by
+  rfl
+
 @[simp] theorem step_gaslimit_ok
     (state : EvmYul.Yul.State) :
     EvmYul.step (τ := .Yul) EvmYul.Operation.GASLIMIT none state [] =

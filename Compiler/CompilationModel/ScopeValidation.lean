@@ -412,6 +412,7 @@ def validateScopedExprIdentifiers
       throw s!"Compilation error: {context} uses standalone Expr.adtField; use Stmt.matchAdt field bindings so the variant, field bounds, and active tag are validated"
   | Expr.literal _ | Expr.storage _ | Expr.storageAddr _ | Expr.caller | Expr.contractAddress | Expr.txOrigin | Expr.chainid
   | Expr.msgValue | Expr.selfBalance | Expr.blockTimestamp | Expr.blockNumber | Expr.blobbasefee | Expr.baseFee | Expr.gasPrice
+  | Expr.blockCoinbase
   | Expr.calldatasize | Expr.returndataSize =>
       pure ()
 termination_by e => sizeOf e

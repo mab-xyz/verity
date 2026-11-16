@@ -124,9 +124,7 @@ private partial def validateDoElemExprTypes
           let rhs : Term := ⟨patDecl[4]⟩
           match ← resolveTypedInterfaceCallEarly? fields constDecls immutableDecls externalDecls params locals rhs with
           | some (ext, _, _, some _, _) =>
-              let typedNames := (names.zip ext.returnTys).filterMap fun (name?, ty) =>
-                name?.map (fun name => mkTypedLocal name ty)
-              pure (some (locals ++ typedNames))
+              pure (some (locals ++ typedInterfaceTupleLocals ext names))
           | _ => match ← resolveQualifiedFunctionApp? fields constDecls immutableDecls externalDecls params locals rhs with
           | some (qualifiedName, _) =>
               let typedNames ← qualifiedTupleBindTypedLocals patDecl qualifiedName names
@@ -154,9 +152,7 @@ private partial def validateDoElemExprTypes
           let rhs : Term := ⟨patDecl[3][0]⟩
           match ← resolveTypedInterfaceCallEarly? fields constDecls immutableDecls externalDecls params locals rhs with
           | some (ext, _, _, some _, _) =>
-              let typedNames := (names.zip ext.returnTys).filterMap fun (name?, ty) =>
-                name?.map (fun name => mkTypedLocal name ty)
-              pure (some (locals ++ typedNames))
+              pure (some (locals ++ typedInterfaceTupleLocals ext names))
           | _ => match ← resolveQualifiedFunctionApp? fields constDecls immutableDecls externalDecls params locals rhs with
           | some (qualifiedName, _) =>
               let typedNames ← qualifiedTupleBindTypedLocals patDecl qualifiedName names
@@ -583,6 +579,9 @@ private partial def validateEffectStmtExprTypes
       let _ ← translateLinkedExternalCallArgs fields constDecls immutableDecls params locals args
   | `(term| revertEmpty) | `(term| revertReturndata) =>
       pure ()
+  | `(term| revertBytes $name:term) =>
+      unless (memoryBytesLocal? locals name).isSome do
+        throwErrorAt name "revertBytes expects the Bytes of a (Bool, Bytes) typed-interface return"
   | _ =>
       -- a typed interface call in statement position is only valid when the
       -- method is void; `resolveTypedInterfaceCall?` already validates arg
@@ -1119,6 +1118,15 @@ private def translateEffectStmt
       `(Compiler.CompilationModel.Stmt.revertEmpty)
   | `(term| revertReturndata) =>
       `(Compiler.CompilationModel.Stmt.revertReturndata)
+  | `(term| revertBytes $name:term) =>
+      let some localName := memoryBytesLocal? locals name
+        | throwErrorAt name "revertBytes expects the Bytes of a (Bool, Bytes) typed-interface return"
+      let lengthWord := memoryArrayDataOffsetName (Compiler.Modules.Calls.abiReturnBytesArrayName localName)
+      `(Compiler.CompilationModel.Stmt.ecm Compiler.Modules.Calls.revertMemoryBytesModule
+          [Compiler.CompilationModel.Expr.add
+             (Compiler.CompilationModel.Expr.localVar $(strTerm lengthWord))
+             (Compiler.CompilationModel.Expr.literal 32),
+           $(← memoryBytesLengthExpr localName)])
   | `(term| returnValues $values:term) =>
       let valueExprs ← expectExprList fields constDecls immutableDecls params locals values
         (some (translateDeclaredPureExpr
@@ -1199,6 +1207,11 @@ private def translateEffectStmt
       match ← resolveTypedInterfaceCall? fields constDecls immutableDecls externalDecls params locals stx with
       | some (ext, target, argTerms, none, selector) =>
           let targetExpr ← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals target
+          if isAbiFrameTypedInterface ext.params ext.returnTys then
+            let (shapes, words) ← translateAbiFrameCallArgs fields constDecls immutableDecls
+              externalDecls params locals ext.params argTerms
+            return ← abiFrameCallStmt ext selector targetExpr shapes words
+              (← `(Compiler.Modules.Calls.AbiCallReturnShape.words []))
           -- One expression per ABI word (a static tuple argument contributes one per component).
           let argExprs ← translateLinkedExternalCallArgs fields constDecls immutableDecls params locals argTerms
             (translateExpr? := some (translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals))
@@ -1396,6 +1409,10 @@ private partial def translateDoElem
           -- Typed interface calls have qualified syntax (`oracle.bounds`), so
           -- recognize their external ABI bind before the generic qualified
           -- helper path below.
+          match (← tupleAbiFrameCallBindStmts? fields constDecls immutableDecls externalDecls params locals rhs names) with
+          | some (stmts, typedLocals) =>
+              pure (some (stmts, locals ++ typedLocals, mutableLocals))
+          | none =>
           match (← tupleExternalCallBindStmt? fields constDecls immutableDecls externalDecls params locals rhs names) with
           | some stmt =>
               pure (some (#[(stmt.1)], locals ++ stmt.2, mutableLocals))
@@ -1672,6 +1689,27 @@ private partial def translateDoElem
                           match ← resolveTypedInterfaceCall? fields constDecls immutableDecls externalDecls params locals rhs with
                           | some (ext, target, argTerms, some retTy, selector) =>
                               let targetExpr ← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals target
+                              if isAbiFrameTypedInterface ext.params ext.returnTys then
+                                if isBoolBytesReturn ext.returnTys then
+                                  throwErrorAt rhs s!"typed interface call '{ext.name}' returns (Bool, Bytes); bind it with tuple destructuring `let (ok, data) ← ...`"
+                                let leaves := staticLeafBindings varName retTy
+                                unless some leaves.length == staticAbiWordCount? retTy do
+                                  throwErrorAt rhs s!"typed interface call '{ext.name}' returns {renderValueType retTy}, which has no static ABI word layout"
+                                let (shapes, words) ← translateAbiFrameCallArgs fields constDecls immutableDecls
+                                  externalDecls params locals ext.params argTerms
+                                let leafTerms := leaves.toArray.map (fun (leaf, _) => strTerm leaf)
+                                let ret ← `(Compiler.Modules.Calls.AbiCallReturnShape.words [ $[$leafTerms],* ])
+                                let mut stmts := #[← abiFrameCallStmt ext selector targetExpr shapes words ret]
+                                for (leaf, leafTy) in leaves do
+                                  if let some normalization ← normalizeBoundValueStmt? leafTy rhs leaf then
+                                    stmts := stmts.push normalization
+                                if leaves.length > 1 then
+                                  let leafLocals := leaves.toArray.map (fun (leaf, leafTy) => mkTypedLocal leaf leafTy)
+                                  return (stmts,
+                                    (locals ++ leafLocals).push
+                                      { name := varName, ty := retTy, source := .compositeLeaves },
+                                    mutableLocals)
+                                return (stmts, locals.push (mkTypedLocal varName retTy), mutableLocals)
                               -- One expression per ABI word (a static tuple argument contributes one per component).
                               let argExprs ← translateLinkedExternalCallArgs fields constDecls immutableDecls params locals argTerms
                                 (translateExpr? := some (translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals))
@@ -3488,6 +3526,66 @@ private partial def bodyNeedsLinkedCallContext
     stx.getArgs.anyM go
   go stx
 
+/-- Executable form of an ABI-frame typed-interface call (`isAbiFrameTypedInterface`): it
+journals `Contracts.abiCallBytes selector args`, the calldata the compiled
+`Compiler.Modules.Calls.abiCallModule` sends, and the threaded context answers it.
+
+It takes precedence over `linked_contracts` hops: a bound callee body takes the arguments
+as values and records no journal entry, while the compiled call sends head/tail bytes, and
+`abiEncodeCall` payloads have no source-level value for it. So an ABI-frame method of a
+named binding is answered by the context (the bound body is not run), and one of a
+`deferred` binding is answered as any deferred call, with `site.calldata` the ABI bytes
+(a `withLinks` / `withViewLinks` body receives those bytes, selector included). -/
+private def abiFrameExecutableCall? (externalDecls : Array ExternalDecl)
+    (params : Array ParamDecl) (ext : ExternalDecl) (target : Term) (args : Array Term)
+    (adv : Term) : CommandElabM (Option Term) := do
+  unless isAbiFrameTypedInterface ext.params ext.returnTys do
+    return none
+  let methodName := (ext.name.splitOn ".").getLast!
+  let selector := Compiler.keccak256_first_4_bytes (interfaceFunctionSignature methodName ext.params)
+  let abiArgs ← (args.zip ext.params).mapM fun (arg, ty) => do
+    if ty == .bytes then
+      match abiEncodeCallSyntax? arg with
+      | some (sel, items) =>
+          -- A constant selector is the contract constant itself (`Contracts.abiSelectorOfWord`
+          -- of its word), as the compilation model reads it from the constant's literal.
+          let itemSelector ←
+            match stripParens sel with
+            | `(term| $n:num) => pure (natTerm n.getNat)
+            | _ => `(_root_.Contracts.abiSelectorOfWord (_root_.Contracts.externalArgWord $sel).val)
+          let itemTerms ← items.mapM fun item => do
+            if isEmptyBytesTerm params item then
+              `(_root_.Contracts.AbiCallArg.bytes _root_.Contracts.emptyBytes)
+            else
+            match directParamNameWithType? params item with
+            | some (_, .bytes) => `(_root_.Contracts.AbiCallArg.bytes $item)
+            | _ => `(_root_.Contracts.AbiCallArg.word (_root_.Contracts.externalArgWord $item))
+          `(_root_.Contracts.AbiCallArg.bytes
+              (_root_.Contracts.abiEncodeCall $itemSelector [ $[$itemTerms],* ]))
+      | none =>
+          if isEmptyBytesTerm params arg then
+            `(_root_.Contracts.AbiCallArg.bytes _root_.Contracts.emptyBytes)
+          else
+            `(_root_.Contracts.AbiCallArg.bytes $arg)
+    else
+      let tyTerm ← contractValueTypeTerm ty
+      `(_root_.Contracts.AbiCallArg.word (_root_.Contracts.externalArgWord ($arg : $tyTerm)))
+  let isStaticTerm ← if ext.isView then `(true) else `(false)
+  let siteId := natTerm (linkedExternalSiteId externalDecls ext.name)
+  let name := strTerm ext.name
+  if isBoolBytesReturn ext.returnTys then
+    some <$> `(_root_.Contracts.externalCallAbiBoolBytesTo $name $target $(natTerm selector)
+      [ $[$abiArgs],* ] $adv $isStaticTerm $siteId)
+  else if ext.returnTys.isEmpty then
+    some <$> `(_root_.Contracts.externalCallAbiTo (α := Unit) $name $target $(natTerm selector)
+      [ $[$abiArgs],* ] $adv $isStaticTerm 0 $siteId)
+  else
+    let resultTy ← externalReturnTypeTerm ext
+    let arity := natTerm (← flattenedExternalArity ext)
+    let call ← `(_root_.Contracts.externalCallAbiTo (α := $resultTy) $name $target
+      $(natTerm selector) [ $[$abiArgs],* ] $adv $isStaticTerm $arity $siteId)
+    some <$> withDeclaredExternalResultDecoder ext resultTy call
+
 private def rewriteTypedInterfaceCall?
     (externalDecls : Array ExternalDecl)
     (params : Array ParamDecl)
@@ -3503,6 +3601,9 @@ private def rewriteTypedInterfaceCall?
   let extName := interfaceExternalName interfaceName methodName
   let some ext := externalDecls.find? (fun ext => ext.name == extName) | pure none
   let isView := externalDecls.any (fun candidate => candidate.name == extName && candidate.isView)
+  -- ABI-frame calls are routed before any linked hop (see `abiFrameExecutableCall?`).
+  if let some call ← abiFrameExecutableCall? externalDecls params ext target argTerms adv then
+    return some call
   match ← hopBoundCallTerm? linkedContracts target targetName extName argTerms isView adv
       (returnTys := ext.returnTys) (registryMode := registryMode) with
   | some hop => return some hop
@@ -3552,6 +3653,9 @@ private def rewriteLinkedCallTerm
         match stripParens target with
         | `(term| $targetIdent:ident) => pure (toString targetIdent.getId)
         | _ => pure ""
+      -- ABI-frame calls are routed before any linked hop (see `abiFrameExecutableCall?`).
+      if let some call ← abiFrameExecutableCall? externalDecls params ext target args adv then
+        return call
       match ← hopBoundCallTerm? linkedContracts target targetName extName args ext.isView adv
           (returnTys := ext.returnTys) (registryMode := registryMode) with
       | some hop => return hop
@@ -3578,6 +3682,9 @@ private def rewriteLinkedCallTerm
         match stripParens target with
         | `(term| $targetIdent:ident) => pure (toString targetIdent.getId)
         | _ => pure ""
+      -- ABI-frame calls are routed before any linked hop (see `abiFrameExecutableCall?`).
+      if let some call ← abiFrameExecutableCall? externalDecls params ext target args adv then
+        return call
       match ← hopBoundCallTerm? linkedContracts target targetName extName args ext.isView adv
           (returnTys := ext.returnTys) (registryMode := registryMode) with
       | some hop => return hop
@@ -7231,11 +7338,12 @@ def validateExternalDeclsPublic
         s!"duplicate external declaration '{ext.name}'"
     if ext.interfaceName?.isSome then
       -- Typed-interface externals: #1982 progress — static composites
-      -- (tuples/fixed-arrays of word-likes) now accepted on params and
-      -- returns. True dynamic shapes still rejected at declaration time
-      -- (error points at #1982).
-      requireTypedInterfaceStaticParams ext.ident ext.name ext.params
-      requireTypedInterfaceStaticReturns ext.ident ext.name ext.returnTys
+      -- (tuples/fixed-arrays of word-likes) accepted on params and returns,
+      -- and `Bytes` params / `(Bool, Bytes)` returns on ABI-frame methods
+      -- (`isAbiFrameTypedInterface`). Other dynamic shapes are still rejected
+      -- at declaration time (error points at #1982).
+      requireTypedInterfaceSupportedParams ext.ident ext.name ext.params ext.returnTys
+      requireTypedInterfaceSupportedReturns ext.ident ext.name ext.returnTys
     else
       -- Multi-return externals are allowed; the auto-revert expression form (externalCall)
       -- only supports single-return, but tryExternalCall supports any return count.

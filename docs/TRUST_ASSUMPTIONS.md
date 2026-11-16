@@ -463,6 +463,27 @@ Current theorem totals, property-test coverage, and proof status live in [docs/V
   `returndatasize >= 32 * n`, binds word `i` to result `i`; trust surface
   `abiBoundary`, assumption `external_call_abi_interface`). View tuple calls
   keep the static oracle-summary ECM.
+- **ABI-frame typed-interface calls (#1982 progress)**: a method taking
+  `Bytes` or returning `(Bool, Bytes)` lowers to
+  `Compiler.Modules.Calls.abiCallModule` (Solidity head/tail calldata, exact
+  revert bubbling, solc's `(bool, bytes)` returndata checks; trust surface
+  `abiBoundary`, assumption `external_call_abi_interface`), `view` methods
+  included (`staticcall`, no oracle summary). The executable plane journals
+  `Contracts.abiCallBytes selector args` (`Contracts.abiCallSite_journal`,
+  `Contracts.externalCallAbiTo_journal`,
+  `Contracts.externalCallAbiBoolBytesTo_journal`), answered by the threaded
+  context; that the compiled Yul sends exactly these bytes is assumed, and
+  tested against Solidity (`test/InterfaceBytesCallSmoke.t.sol`). Executable
+  returndata stays word-granular: the adversary answers a list of words, so
+  "for all adversaries" theorems never see a returndata length that is not a
+  multiple of 32 (e.g. a hostile 65-byte return); the malformed-length cases
+  of the `(Bool, Bytes)` decoding are covered only by the Yul checks and the
+  Foundry test, not by executable-plane theorems. `revertBytes` reverts with a
+  fixed message there (its payload is not modelled). ABI-frame calls take
+  precedence over `linked_contracts` hops: a named binding's body is not run
+  for them (the context answers, which over-approximates the bound callee),
+  and a `deferred` binding's `withLinks` / `withViewLinks` body receives the
+  ABI bytes, selector included, as `site.calldata`.
 - **Runtime-target dispatch and G25 (one interface, several runtime
   contracts)**: a bound hop always runs at the call's runtime target
   address. A receiver named after a binding selects it; otherwise the

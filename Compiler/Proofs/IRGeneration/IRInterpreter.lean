@@ -302,7 +302,8 @@ def evalIRCall (state : IRState) (func : String) : List YulExpr → Option Nat
     else
       Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress state.blockTimestamp
-        state.blockNumber state.chainId state.blobBaseFee state.txOrigin state.selector state.calldata func argVals
+        state.blockNumber state.chainId state.blobBaseFee state.txOrigin state.blockCoinbase
+        state.selector state.calldata func argVals
   termination_by args => exprsSize args + 1
   decreasing_by
     omega
@@ -553,7 +554,8 @@ def evalIRCallWithInternals
             match Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
                 state'.storage state'.sender state'.msgValue state'.thisAddress
                 state'.blockTimestamp state'.blockNumber state'.chainId state'.blobBaseFee
-                state'.txOrigin state'.selector state'.calldata func argVals with
+                state'.txOrigin state'.blockCoinbase state'.selector
+                state'.calldata func argVals with
             | some value => .values [value] state'
             | none => .revert state'
   | .stop state' => .stop state'
@@ -4629,7 +4631,8 @@ theorem evalIRCallWithInternals_of_builtin
       match Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
           state'.storage state'.sender state'.msgValue state'.thisAddress
           state'.blockTimestamp state'.blockNumber state'.chainId state'.blobBaseFee
-          state'.txOrigin state'.selector state'.calldata func argVals with
+          state'.txOrigin state'.blockCoinbase state'.selector
+          state'.calldata func argVals with
       | some value => .values [value] state'
       | none => .revert state' := by
   simp only [evalIRCallWithInternals, hargs, hfind, hnotTload, hnotMload, hnotExtcodesize,

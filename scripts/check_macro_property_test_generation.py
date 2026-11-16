@@ -27,6 +27,10 @@ EXCLUDED_CONTRACTS = {
     # covered by Lean macro invariant and round-trip tests instead.
     "DynamicStructArraySmoke",
     "ArrayElementDynamicMemberLengthSmoke",
+    # Same limitation for a struct parameter with a Bytes member (the stub would
+    # pass its fields flat, not as a tuple); test/StructBytesMemberCopySmoke.t.sol
+    # checks the compiled code against Solidity instead.
+    "StructBytesMemberCopySmoke",
     "ArrayElementDynamicMemberElementSmoke",
     "UnlinkPoolShapeCheckSmoke",
     "FixedArrayStructSmoke",
@@ -39,6 +43,15 @@ EXCLUDED_CONTRACTS = {
     # test/InterfaceCompositeReturnSmoke.t.sol against a mock pool; generated stubs
     # cannot map FixedArray and would call a random (non-pool) address.
     "InterfaceCompositeReturnSmoke",
+    # ABI-frame typed-interface calls (Bytes arguments, (Bool, Bytes) returns) are
+    # covered on chain by test/InterfaceBytesCallSmoke.t.sol against recording mocks;
+    # generated stubs would call random (non-mock) addresses.
+    "InterfaceBytesCallSmoke",
+    # linked_contracts probes for ABI-frame methods (executable `#guard`s in
+    # InterfaceBytesCallSmoke.lean); no on-chain counterpart to stub.
+    "BytesVenueCallee",
+    "LinkedBytesCaller",
+    "DeferredBytesCaller",
     # Whole fixed-array/struct values are covered on chain by
     # test/WholeCompositeValueSmoke.t.sol (byte parity with Solidity); the generator
     # cannot map FixedArray.
@@ -47,6 +60,9 @@ EXCLUDED_CONTRACTS = {
     # The generated no-revert stub cannot currently fund the contract before
     # exercising `callWithValue`; Lean/Yul/trust-report tests cover this ECM.
     "CallWithValueSmoke",
+    # `payCoinbase` sends ETH from the unfunded contract to `block.coinbase`;
+    # test/CoinbaseSmoke.t.sol funds it and sets the coinbase with `vm.coinbase`.
+    "CoinbaseSmoke",
     # The generator does not fund the deployed contract before calling value
     # forwarding ECM smoke entrypoints. Lean macro/model tests cover this
     # low-level surface; a generated no-revert Foundry stub would be invalid.

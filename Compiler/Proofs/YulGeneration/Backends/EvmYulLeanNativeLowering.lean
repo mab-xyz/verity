@@ -173,6 +173,7 @@ theorem lookupRuntimePrimOp_timestamp : lookupRuntimePrimOp "timestamp" = some .
 theorem lookupRuntimePrimOp_number : lookupRuntimePrimOp "number" = some .NUMBER := by rfl
 theorem lookupRuntimePrimOp_chainid : lookupRuntimePrimOp "chainid" = some .CHAINID := by rfl
 theorem lookupRuntimePrimOp_blobbasefee : lookupRuntimePrimOp "blobbasefee" = some .BLOBBASEFEE := by rfl
+theorem lookupRuntimePrimOp_coinbase : lookupRuntimePrimOp "coinbase" = some .COINBASE := by rfl
 theorem lookupRuntimePrimOp_tload : lookupRuntimePrimOp "tload" = some .TLOAD := by rfl
 theorem lookupRuntimePrimOp_mload : lookupRuntimePrimOp "mload" = some .MLOAD := by rfl
 theorem lookupRuntimePrimOp_extcodesize : lookupRuntimePrimOp "extcodesize" = some .EXTCODESIZE := by rfl
@@ -1053,6 +1054,7 @@ def lookupPrimOp : String → Option (EvmYul.Operation .Yul)
   | "number"         => some .NUMBER
   | "chainid"        => some .CHAINID
   | "blobbasefee"    => some .BLOBBASEFEE
+  | "coinbase"       => some .COINBASE
   -- Storage
   | "sload"          => some .SLOAD
   | _                => none

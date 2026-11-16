@@ -843,6 +843,7 @@ jobs:
             Contracts.Smoke.UnitReturnSmoke
             Contracts.Smoke.WholeCompositeValueSmoke
             Contracts.Smoke.InterfaceCompositeReturnSmoke
+            Contracts.Smoke.InterfaceBytesCallSmoke
             Contracts.Smoke.NamedStructReturnSmoke
             Contracts.Smoke.DirectDynamicECMArgSmoke
             Contracts.Smoke.Create2AddressSmoke
@@ -853,6 +854,7 @@ jobs:
             Contracts.Smoke.MulDiv512Smoke
             Contracts.Smoke.Int256CheckedSmoke
             Contracts.Smoke.SelfBalanceSmoke
+            Contracts.Smoke.CoinbaseSmoke
             Contracts.Smoke.TryCatchSmoke
             Contracts.Smoke.TryCatchArgSmoke
             Contracts.StringArrayErrorSmoke
@@ -903,6 +905,7 @@ jobs:
             Contracts.Smoke.UnitReturnSmoke
             Contracts.Smoke.WholeCompositeValueSmoke
             Contracts.Smoke.InterfaceCompositeReturnSmoke
+            Contracts.Smoke.InterfaceBytesCallSmoke
             Contracts.Smoke.NamedStructReturnSmoke
             Contracts.Smoke.DirectDynamicECMArgSmoke
             Contracts.Smoke.Create2AddressSmoke
@@ -913,6 +916,7 @@ jobs:
             Contracts.Smoke.MulDiv512Smoke
             Contracts.Smoke.Int256CheckedSmoke
             Contracts.Smoke.SelfBalanceSmoke
+            Contracts.Smoke.CoinbaseSmoke
             Contracts.Smoke.TryCatchSmoke
             Contracts.Smoke.TryCatchArgSmoke
             Contracts.StringArrayErrorSmoke

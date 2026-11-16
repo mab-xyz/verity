@@ -493,6 +493,10 @@ def callbackContractTransition (ctx : CallbackContext)
     (world : Verity.ContractState) :
     (withCallbackContext ctx world).gasPrice = world.gasPrice := rfl
 
+@[simp] theorem withCallbackContext_blockCoinbase (ctx : CallbackContext)
+    (world : Verity.ContractState) :
+    (withCallbackContext ctx world).blockCoinbase = world.blockCoinbase := rfl
+
 @[simp] theorem withCallbackContext_txOrigin (ctx : CallbackContext)
     (world : Verity.ContractState) :
     (withCallbackContext ctx world).txOrigin = world.txOrigin := rfl
@@ -578,6 +582,11 @@ theorem withCallbackContext_selfBalance_of_msgValue_zero (ctx : CallbackContext)
 @[simp] theorem restoreCallbackContext_gasPrice
     (outer callbackResult : Verity.ContractState) :
     (restoreCallbackContext outer callbackResult).gasPrice = callbackResult.gasPrice := rfl
+
+@[simp] theorem restoreCallbackContext_blockCoinbase
+    (outer callbackResult : Verity.ContractState) :
+    (restoreCallbackContext outer callbackResult).blockCoinbase =
+      callbackResult.blockCoinbase := rfl
 
 @[simp] theorem restoreCallbackContext_txOrigin
     (outer callbackResult : Verity.ContractState) :
