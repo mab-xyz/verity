@@ -843,6 +843,7 @@ jobs:
             Contracts.Smoke.UnitReturnSmoke
             Contracts.Smoke.WholeCompositeValueSmoke
             Contracts.Smoke.InterfaceCompositeReturnSmoke
+            Contracts.Smoke.InterfaceBytesCallSmoke
             Contracts.Smoke.NamedStructReturnSmoke
             Contracts.Smoke.DirectDynamicECMArgSmoke
             Contracts.Smoke.Create2AddressSmoke
@@ -903,6 +904,7 @@ jobs:
             Contracts.Smoke.UnitReturnSmoke
             Contracts.Smoke.WholeCompositeValueSmoke
             Contracts.Smoke.InterfaceCompositeReturnSmoke
+            Contracts.Smoke.InterfaceBytesCallSmoke
             Contracts.Smoke.NamedStructReturnSmoke
             Contracts.Smoke.DirectDynamicECMArgSmoke
             Contracts.Smoke.Create2AddressSmoke
