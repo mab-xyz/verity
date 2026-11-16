@@ -938,6 +938,7 @@ def evalExpr (oracle : DenoteOracle) (fields : List Field) (state : DenoteState)
   | .blobbasefee => some state.world.blobBaseFee.val
   | .baseFee => some state.world.baseFee.val
   | .gasPrice => some state.world.gasPrice.val
+  | .blockCoinbase => some state.world.blockCoinbase.val
   | .calldatasize => some state.world.calldataSize.val
   -- Mirrors `SourceSemantics.evalExpr`: `returndatasize()` in bytes.
   | .returndataSize => some (state.rawReturndata.map List.length |>.getD state.world.returndataSize)
@@ -2341,6 +2342,7 @@ structure DenoteTransaction where
   chainId : Nat := 0
   blobBaseFee : Nat := 0
   txOrigin : Nat := 0
+  blockCoinbase : Nat := 0
   functionSelector : Nat
   args : List Nat
   deriving Repr
@@ -2433,6 +2435,7 @@ def withTransactionContext (world : Verity.ContractState) (tx : DenoteTransactio
     chainId := tx.chainId
     blobBaseFee := tx.blobBaseFee
     txOrigin := Verity.wordToAddress tx.txOrigin
+    blockCoinbase := Verity.wordToAddress tx.blockCoinbase
     calldataSize := Verity.Core.Uint256.ofNat (4 + tx.args.length * 32)
     calldata := tx.args
     returndata := [] }

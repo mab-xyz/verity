@@ -596,7 +596,8 @@ def convertStructCalldataToMemory (descriptor : MemParam) (at_ : Json) :
 
 def isAtom : Expr → Bool
   | .literal _ | .localVar _ | .param _ | .immutable _ | .blockTimestamp | .blockNumber
-  | .caller | .contractAddress | .chainid | .selfBalance | .txOrigin | .baseFee | .gasPrice => true
+  | .caller | .contractAddress | .chainid | .selfBalance | .txOrigin | .baseFee | .gasPrice
+  | .blockCoinbase => true
   | _ => false
 
 partial def targetAssignedIds (t : Json) : List Nat :=
@@ -758,7 +759,8 @@ end
 
 def isOrderIndependentSibling : Expr → Bool
   | .literal _ | .param _ | .immutable _ | .blockTimestamp | .blockNumber
-  | .caller | .contractAddress | .chainid | .selfBalance | .txOrigin | .baseFee | .gasPrice => true
+  | .caller | .contractAddress | .chainid | .selfBalance | .txOrigin | .baseFee | .gasPrice
+  | .blockCoinbase => true
   | _ => false
 
 partial def evalConstExpr? (env : RBMap String Nat compare) : Expr → Option Nat

@@ -130,6 +130,7 @@ def toIRTransaction (tx : DenoteTransaction) : IRTransaction :=
     chainId := tx.chainId
     blobBaseFee := tx.blobBaseFee
     txOrigin := tx.txOrigin
+    blockCoinbase := tx.blockCoinbase
     functionSelector := tx.functionSelector
     args := tx.args }
 

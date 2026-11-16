@@ -129,7 +129,7 @@ def exprEffectSummary (helperEffects : String → MacroEffectSummary) :
   | .literal _ | .param _ | .constructorArg _ | .immutable _ | .localVar _
   | .caller | .contractAddress | .txOrigin | .chainid | .msgValue
   | .selfBalance | .blockTimestamp | .blockNumber | .blobbasefee
-  | .baseFee | .gasPrice | .calldatasize | .returndataSize
+  | .baseFee | .gasPrice | .blockCoinbase | .calldatasize | .returndataSize
   | .arrayLength _ | .memoryArrayLength _
   | .paramDynamicHeadWord _ _ | .paramDynamicMemberLength _ _
   | .paramDynamicMemberDataOffset _ _ | .paramDynamicStaticComposite _ _

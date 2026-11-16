@@ -151,7 +151,7 @@ def collectLowLevelExprMechanics : Expr → List String
   | .literal _ | .param _ | .constructorArg _ | .immutable _
   | .storage _ | .storageAddr _
   | .caller | .contractAddress | .txOrigin | .chainid | .msgValue | .selfBalance
-  | .blockTimestamp | .blockNumber | .baseFee | .gasPrice | .calldatasize
+  | .blockTimestamp | .blockNumber | .baseFee | .gasPrice | .blockCoinbase | .calldatasize
   | .localVar _ | .arrayLength _ | .memoryArrayLength _
   | .paramDynamicHeadWord _ _ | .paramDynamicMemberLength _ _
   | .paramDynamicMemberDataOffset _ _ | .paramDynamicStaticComposite _ _
@@ -539,6 +539,7 @@ private partial def collectRuntimeIntrospectionExprMechanics : Expr → List Str
   | .blobbasefee => ["blobbasefee"]
   | .baseFee => ["baseFee"]
   | .gasPrice => ["gasPrice"]
+  | .blockCoinbase => ["blockCoinbase"]
   | .externalCall _ args
   | .internalCall _ args =>
       args.flatMap collectRuntimeIntrospectionExprMechanics
@@ -609,7 +610,7 @@ private def collectRuntimeIntrospectionMechanicsFromStmts (stmts : List Stmt) : 
                 if mechanic == .contractAddress || mechanic == .chainid ||
                     mechanic == .selfBalance || mechanic == .blockNumber ||
                     mechanic == .blobbasefee || mechanic == .baseFee ||
-                    mechanic == .gasPrice then
+                    mechanic == .gasPrice || mechanic == .blockCoinbase then
                   some mechanic.toReportString
                 else
                   none)

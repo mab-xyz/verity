@@ -47,6 +47,7 @@ def exprCovered : Expr → Bool
   | .blockNumber | .chainid | .caller | .contractAddress | .msgValue | .selfBalance | .txOrigin | .baseFee | .gasPrice => true
   | .immutable _ => true
   | .returndataSize => true
+  | .blockCoinbase => true
   | .structMember _ key _ => exprCovered key
   | .structMember2 _ key1 key2 _ => exprCovered key1 && exprCovered key2
   | .storageArrayElement _ index => exprCovered index

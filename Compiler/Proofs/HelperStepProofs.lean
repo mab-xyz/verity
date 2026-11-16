@@ -2722,7 +2722,7 @@ theorem evalIRExprWithInternals_binary_builtin_of_values
       Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
           finalState.storage finalState.sender finalState.msgValue finalState.thisAddress
           finalState.blockTimestamp finalState.blockNumber finalState.chainId
-          finalState.blobBaseFee finalState.txOrigin finalState.selector
+          finalState.blobBaseFee finalState.txOrigin finalState.blockCoinbase finalState.selector
           finalState.calldata func [leftValue, rightValue] =
         some value) :
     evalIRExprWithInternals runtimeContract fuel state
@@ -2760,7 +2760,7 @@ theorem evalIRExprWithInternals_unary_builtin_of_value
       Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
           finalState.storage finalState.sender finalState.msgValue finalState.thisAddress
           finalState.blockTimestamp finalState.blockNumber finalState.chainId
-          finalState.blobBaseFee finalState.txOrigin finalState.selector
+          finalState.blobBaseFee finalState.txOrigin finalState.blockCoinbase finalState.selector
           finalState.calldata func [argValue] =
         some value) :
     evalIRExprWithInternals runtimeContract fuel state
@@ -2844,7 +2844,8 @@ theorem evalBuiltinCallWithEvmYulLeanContext_add_of_values
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress
         state.blockTimestamp state.blockNumber state.chainId state.blobBaseFee
-        state.txOrigin state.selector state.calldata "add" [leftValue, rightValue] =
+        state.txOrigin state.blockCoinbase state.selector
+        state.calldata "add" [leftValue, rightValue] =
       some (exprAddValue leftValue rightValue) := by
   simp [Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext,
     exprAddValue, Verity.Core.Uint256.add, Verity.Core.Uint256.ofNat,
@@ -3099,7 +3100,8 @@ theorem evalBuiltinCallWithEvmYulLeanContext_mul_of_values
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress
         state.blockTimestamp state.blockNumber state.chainId state.blobBaseFee
-        state.txOrigin state.selector state.calldata "mul" [leftValue, rightValue] =
+        state.txOrigin state.blockCoinbase state.selector
+        state.calldata "mul" [leftValue, rightValue] =
       some (exprMulValue leftValue rightValue) := by
   simp [Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext,
     exprMulValue, Verity.Core.Uint256.mul, Verity.Core.Uint256.ofNat,
@@ -3350,7 +3352,8 @@ theorem evalBuiltinCallWithEvmYulLeanContext_sub_of_values
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress
         state.blockTimestamp state.blockNumber state.chainId state.blobBaseFee
-        state.txOrigin state.selector state.calldata "sub" [leftValue, rightValue] =
+        state.txOrigin state.blockCoinbase state.selector
+        state.calldata "sub" [leftValue, rightValue] =
       some (exprSubValue leftValue rightValue) := by
   rw [exprSubValue_eq_builtin]
   simp [Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext]
@@ -3594,7 +3597,8 @@ theorem evalBuiltinCallWithEvmYulLeanContext_div_of_values
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress
         state.blockTimestamp state.blockNumber state.chainId state.blobBaseFee
-        state.txOrigin state.selector state.calldata "div" [leftValue, rightValue] =
+        state.txOrigin state.blockCoinbase state.selector
+        state.calldata "div" [leftValue, rightValue] =
       some (exprDivValue leftValue rightValue) := by
   rw [exprDivValue_eq_builtin]
   simp [Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext]
@@ -3838,7 +3842,8 @@ theorem evalBuiltinCallWithEvmYulLeanContext_mod_of_values
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress
         state.blockTimestamp state.blockNumber state.chainId state.blobBaseFee
-        state.txOrigin state.selector state.calldata "mod" [leftValue, rightValue] =
+        state.txOrigin state.blockCoinbase state.selector
+        state.calldata "mod" [leftValue, rightValue] =
       some (exprModValue leftValue rightValue) := by
   rw [exprModValue_eq_builtin]
   simp [Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext]
@@ -4074,7 +4079,8 @@ theorem evalBuiltinCallWithEvmYulLeanContext_bitAnd_of_values
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress
         state.blockTimestamp state.blockNumber state.chainId state.blobBaseFee
-        state.txOrigin state.selector state.calldata "and" [leftValue, rightValue] =
+        state.txOrigin state.blockCoinbase state.selector
+        state.calldata "and" [leftValue, rightValue] =
       some (exprBitAndValue leftValue rightValue) := by
   rw [exprBitAndValue_eq_builtin]
   simp [Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext]
@@ -4311,7 +4317,8 @@ theorem evalBuiltinCallWithEvmYulLeanContext_bitOr_of_values
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress
         state.blockTimestamp state.blockNumber state.chainId state.blobBaseFee
-        state.txOrigin state.selector state.calldata "or" [leftValue, rightValue] =
+        state.txOrigin state.blockCoinbase state.selector
+        state.calldata "or" [leftValue, rightValue] =
       some (exprBitOrValue leftValue rightValue) := by
   rw [exprBitOrValue_eq_builtin]
   simp [Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext]
@@ -4548,7 +4555,8 @@ theorem evalBuiltinCallWithEvmYulLeanContext_bitXor_of_values
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress
         state.blockTimestamp state.blockNumber state.chainId state.blobBaseFee
-        state.txOrigin state.selector state.calldata "xor" [leftValue, rightValue] =
+        state.txOrigin state.blockCoinbase state.selector
+        state.calldata "xor" [leftValue, rightValue] =
       some (exprBitXorValue leftValue rightValue) := by
   rw [exprBitXorValue_eq_builtin]
   simp [Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext]
@@ -4798,7 +4806,8 @@ theorem evalBuiltinCallWithEvmYulLeanContext_bitNot_of_value
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress
         state.blockTimestamp state.blockNumber state.chainId state.blobBaseFee
-        state.txOrigin state.selector state.calldata "not" [value] =
+        state.txOrigin state.blockCoinbase state.selector
+        state.calldata "not" [value] =
       some (exprBitNotValue value) := by
   rw [exprBitNotValue_eq_builtin]
   simp [Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext]
@@ -4949,7 +4958,8 @@ theorem evalBuiltinCallWithEvmYulLeanContext_shl_of_values
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress
         state.blockTimestamp state.blockNumber state.chainId state.blobBaseFee
-        state.txOrigin state.selector state.calldata "shl" [shiftValue, valueValue] =
+        state.txOrigin state.blockCoinbase state.selector
+        state.calldata "shl" [shiftValue, valueValue] =
       some (exprShlValue shiftValue valueValue) := by
   rw [exprShlValue_eq_builtin]
   simp [Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext]
@@ -5204,7 +5214,8 @@ theorem evalBuiltinCallWithEvmYulLeanContext_shr_of_values
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress
         state.blockTimestamp state.blockNumber state.chainId state.blobBaseFee
-        state.txOrigin state.selector state.calldata "shr" [shiftValue, valueValue] =
+        state.txOrigin state.blockCoinbase state.selector
+        state.calldata "shr" [shiftValue, valueValue] =
       some (exprShrValue shiftValue valueValue) := by
   rw [exprShrValue_eq_builtin]
   simp [Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext]
@@ -5428,7 +5439,8 @@ theorem evalBuiltinCallWithEvmYulLeanContext_byte_of_values
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress
         state.blockTimestamp state.blockNumber state.chainId state.blobBaseFee
-        state.txOrigin state.selector state.calldata "byte" [indexValue, valueValue] =
+        state.txOrigin state.blockCoinbase state.selector
+        state.calldata "byte" [indexValue, valueValue] =
       some (exprByteValue indexValue valueValue) := by
   simp [Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext,
     exprByteValue]
@@ -5653,7 +5665,8 @@ theorem evalBuiltinCallWithEvmYulLeanContext_signextend_of_values
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext
         state.storage state.sender state.msgValue state.thisAddress
         state.blockTimestamp state.blockNumber state.chainId state.blobBaseFee
-        state.txOrigin state.selector state.calldata "signextend" [byteIdxValue, valueValue] =
+        state.txOrigin state.blockCoinbase state.selector
+        state.calldata "signextend" [byteIdxValue, valueValue] =
       some (exprSignextendValue byteIdxValue valueValue) := by
   simp [Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext,
     exprSignextendValue]

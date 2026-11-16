@@ -22,7 +22,7 @@ def bridgedBuiltins : List String :=
    "slt", "sgt",
    "exp", "sdiv", "smod", "sar", "signextend",
    "caller", "origin", "address", "callvalue", "timestamp",
-   "number", "chainid", "blobbasefee",
+   "number", "chainid", "blobbasefee", "coinbase",
    "calldataload", "calldatasize", "returndatasize",
    "sload", "mappingSlot"]
 

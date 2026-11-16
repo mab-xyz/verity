@@ -76,7 +76,7 @@ def exprLowLevelMechanicsStructural : Expr → List String
   | .calldataload a => "calldataload" :: exprLowLevelMechanicsStructural a
   | .extcodesize a => "extcodesize" :: exprLowLevelMechanicsStructural a
   | .literal _ | .param _ | .constructorArg _ | .immutable _ | .storage _ | .storageAddr _
-  | .caller | .contractAddress | .txOrigin | .chainid | .msgValue | .selfBalance
+  | .caller | .contractAddress | .txOrigin | .blockCoinbase | .chainid | .msgValue | .selfBalance
   | .blockTimestamp | .blockNumber | .baseFee | .gasPrice | .calldatasize | .localVar _
   | .arrayLength _ | .memoryArrayLength _ | .paramDynamicHeadWord _ _
   | .paramDynamicMemberLength _ _ | .paramDynamicMemberDataOffset _ _

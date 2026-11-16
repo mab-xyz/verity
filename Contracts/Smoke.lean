@@ -43,3 +43,4 @@ import Contracts.Smoke.LoopSemanticsSmoke
 import Contracts.Smoke.FallbackNonReentrantSmoke
 import Contracts.Smoke.ScalarAbiValidationSmoke
 import Contracts.Smoke.InterfaceBytesCallSmoke
+import Contracts.Smoke.CoinbaseSmoke
