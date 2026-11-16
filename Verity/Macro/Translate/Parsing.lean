@@ -494,6 +494,23 @@ def hiddenEntrypointIdent (name : String) : Ident :=
 def modifierInternalName (name : String) : String :=
   s!"__modifier_{name}"
 
+/-- `fallback [payable] [local_obligations …] := body`. -/
+def parseFallback (isPayable : Bool) (localObligations? : Option (TSyntax `verityLocalObligations))
+    (body : Term) : CommandElabM FunctionDecl := do
+  let parsedLocalObligations ←
+    match localObligations? with
+    | some obligations => parseLocalObligations obligations
+    | none => pure #[]
+  pure {
+    ident := hiddenEntrypointIdent "fallback"
+    name := "fallback"
+    params := #[]
+    returnTy := .unit
+    isPayable := isPayable
+    localObligations := parsedLocalObligations
+    body := body
+  }
+
 def parseSpecialEntrypoint (stx : Syntax) : CommandElabM FunctionDecl := do
   match stx with
   | `(veritySpecialEntrypoint| receive $[$localObligations?:verityLocalObligations]? := $body:term) => do
@@ -510,19 +527,10 @@ def parseSpecialEntrypoint (stx : Syntax) : CommandElabM FunctionDecl := do
         localObligations := parsedLocalObligations
         body := body
       }
-  | `(veritySpecialEntrypoint| fallback $[$localObligations?:verityLocalObligations]? := $body:term) => do
-      let parsedLocalObligations ←
-        match localObligations? with
-        | some obligations => parseLocalObligations obligations
-        | none => pure #[]
-      pure {
-        ident := hiddenEntrypointIdent "fallback"
-        name := "fallback"
-        params := #[]
-        returnTy := .unit
-        localObligations := parsedLocalObligations
-        body := body
-      }
+  | `(veritySpecialEntrypoint| fallback $[$localObligations?:verityLocalObligations]? := $body:term) =>
+      parseFallback false localObligations? body
+  | `(veritySpecialEntrypoint| fallback payable $[$localObligations?:verityLocalObligations]? := $body:term) =>
+      parseFallback true localObligations? body
   | _ => throwErrorAt stx "invalid special entrypoint declaration"
 
 def parseModifier (stx : Syntax) : CommandElabM ModifierDecl := do

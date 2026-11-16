@@ -53,6 +53,9 @@ reporting:
 - Source-level `internal` functions compile as internal helper specs, are omitted
   from selector dispatch and ABI output, and must not be used for `receive` or
   `fallback` entrypoints.
+- `receive := …` is always payable. `fallback := …` keeps the callvalue guard;
+  `fallback payable := …` is Solidity's `fallback() external payable` and
+  compiles without it.
 - Source-level `interfaces` are syntax over the existing external-call module
   path. Interface-typed parameters erase to `Address`; typed dot calls lower to
   `Calls.withReturnModule` and stay visible in trust reports as ECM calls.

@@ -212,6 +212,8 @@ syntax "constructor " (ppSpace ident "(" sepBy(term, ",") ")")+ (ppSpace verityL
 syntax "constructor " "payable" (ppSpace ident "(" sepBy(term, ",") ")")+ (ppSpace verityLocalObligations)? " := " term : verityConstructor
 syntax "receive" (ppSpace verityLocalObligations)? " := " term : veritySpecialEntrypoint
 syntax "fallback" (ppSpace verityLocalObligations)? " := " term : veritySpecialEntrypoint
+-- Solidity `fallback() external payable`: the fallback accepts ether (`receive` always does).
+syntax "fallback" " payable" (ppSpace verityLocalObligations)? " := " term : veritySpecialEntrypoint
 syntax "modifier " ident " := " term : verityModifier
 syntax "with " sepBy1(ident, ",") : verityModifierUse
 syntax ident " := " ident : verityRoleDecl
