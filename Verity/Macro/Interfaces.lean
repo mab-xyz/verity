@@ -281,6 +281,7 @@ def mappingKeyTypeToValueType : MappingKeyType → ValueType
   | .address => .address
   | .uint256 => .uint256
   | .bytes32 => .bytes32
+  | .bytesN bytes => .bytesN bytes
 
 /-- Convert a `StorageArrayElemType` to its corresponding `ValueType` return in a synthesized getter. -/
 def storageArrayElemTypeToValueType : Compiler.CompilationModel.StorageArrayElemType → ValueType
