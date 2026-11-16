@@ -336,8 +336,19 @@ def tupleElemsFromSyntax? (stx : Syntax) : Option (Array Syntax) :=
   else
     none
 
+/-- A mapping key must carry its key type into the executable plane. A bare
+numeric literal does not (it elaborates as a `Nat`, or has no `MappingKeyWord`
+instance), and for a fixed-bytes key its source spelling is the right-aligned
+payload, so it is rejected with a pointer to the typed forms. -/
+def checkMappingKeyTerm (key : Term) : CommandElabM Term := do
+  if key.raw.isOfKind `num then
+    throwErrorAt key
+      "numeric literal mapping keys are not supported; declare a typed constant (e.g. `selector : Bytes4 := 0x12345678`) or pass a typed parameter"
+  pure key
+
+/-- The key list of `getMappingN` / `setMappingN`. -/
 partial def expectMappingKeyTerms (stx : Term) : CommandElabM (Array Term) := do
-  expectTermListLiteral stx
+  (← expectTermListLiteral stx).mapM checkMappingKeyTerm
 
 partial def collectArrowChainTypes (stx : Term) : CommandElabM (List Term × Term) := do
   match stx with

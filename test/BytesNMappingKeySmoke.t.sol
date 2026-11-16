@@ -42,6 +42,55 @@ contract BytesNMappingKeySmokeTest is Test, YulTestBase {
         assertEq(uint256(vm.load(smoke, bytes32(uint256(base) + 1))), position);
     }
 
+    bytes4 internal constant SELECTOR = 0x12345678;
+
+    function _value(bytes4 key) internal returns (uint256) {
+        (bool ok, bytes memory out) = smoke.call(abi.encodeWithSignature("getValue(bytes4)", key));
+        assertTrue(ok);
+        return abi.decode(out, (uint256));
+    }
+
+    function _assertValueAt(bytes4 key, uint256 value) internal {
+        assertEq(uint256(vm.load(smoke, _slot(key, 3))), value);
+        assertEq(_value(key), value);
+    }
+
+    /// A `Bytes4` constant key is the left-aligned word, not the right-aligned literal.
+    function testFuzzConstantKeyIsSolidity(uint256 value) public {
+        vm.assume(value != 0);
+        (bool ok,) = smoke.call(abi.encodeWithSignature("setValueAtSelector(uint256)", value));
+        assertTrue(ok);
+        _assertValueAt(SELECTOR, value);
+        assertEq(uint256(vm.load(smoke, keccak256(abi.encode(uint256(0x12345678), uint256(3))))), 0);
+    }
+
+    function testFuzzStructConstantKeyIsSolidity(uint256 target) public {
+        vm.assume(target != 0);
+        (bool ok,) = smoke.call(abi.encodeWithSignature("setEntryAtSelector(uint256)", target));
+        assertTrue(ok);
+        assertEq(uint256(vm.load(smoke, _slot(SELECTOR, 4))), target);
+        assertEq(uint256(vm.load(smoke, keccak256(abi.encode(uint256(0x12345678), uint256(4))))), 0);
+    }
+
+    function testFuzzLocalKeyIsSolidity(bytes4 key, uint256 value) public {
+        (bool ok,) = smoke.call(abi.encodeWithSignature("setValueViaLocal(bytes4,uint256)", key, value));
+        assertTrue(ok);
+        _assertValueAt(key, value);
+    }
+
+    function testFuzzHelperResultKeyIsSolidity(uint256 value) public {
+        (bool ok,) = smoke.call(abi.encodeWithSignature("setValueViaHelper(uint256)", value));
+        assertTrue(ok);
+        _assertValueAt(SELECTOR, value);
+    }
+
+    /// `narrowBytes 4 word` keeps the high four bytes, like Solidity's `bytes4(bytes32(word))`.
+    function testFuzzNarrowedKeyIsSolidity(uint256 word, uint256 value) public {
+        (bool ok,) = smoke.call(abi.encodeWithSignature("setValueNarrowed(uint256,uint256)", word, value));
+        assertTrue(ok);
+        _assertValueAt(bytes4(bytes32(word)), value);
+    }
+
     function testFuzzNestedSlotIsSolidity(bytes4 key, address owner, uint256 value) public {
         (bool ok,) =
             smoke.call(abi.encodeWithSignature("setNested(bytes4,address,uint256)", key, owner, value));
