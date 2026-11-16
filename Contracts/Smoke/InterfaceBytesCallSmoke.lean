@@ -13,6 +13,11 @@ open Verity.EVM.Uint256
 verity_contract InterfaceBytesCallSmoke where
   storage
 
+  constants
+    -- Selectors held by constants: a word, and a left-aligned `bytes4` in a `Bytes32`.
+    TRANSFER : Uint256 := 0xa9059cbb
+    PAIR_SWAP : Bytes32 := 0x022c0d9f00000000000000000000000000000000000000000000000000000000
+
   interfaces
     interface IVenues where
       function counterparty(Uint8, Bytes) view returns (Address)
@@ -58,6 +63,32 @@ verity_contract InterfaceBytesCallSmoke where
       revertBytes ret
     return bytesWord ret 0
 
+  -- ETH with no data: an empty `Bytes` argument (Solidity's `""`).
+  function reentrancy_trusted payVia (safe : ISafe, recipient : Address, amt : Uint256) :
+      Uint256 := do
+    let (ok, ret) ← safe.execTransactionFromModuleReturnData recipient amt emptyBytes 0
+    if !ok then
+      revertBytes ret
+    return bytesLength ret
+
+  -- Uniswap V2 `pair.swap(out0, out1, to, "")`: an empty `Bytes` item, a `Bytes32` selector.
+  function reentrancy_trusted pairSwapVia (safe : ISafe, pair : Address, out0 : Uint256,
+      out1 : Uint256, account : Address) : Uint256 := do
+    let (ok, ret) ← safe.execTransactionFromModuleReturnData pair 0
+      (abiEncodeCall PAIR_SWAP [out0, out1, account, emptyBytes]) 0
+    if !ok then
+      revertBytes ret
+    return bytesLength ret
+
+  -- A selector held by a `Uint256` constant.
+  function reentrancy_trusted transferViaConstant (safe : ISafe, token : Address,
+      recipient : Address, amt : Uint256) : Uint256 := do
+    let (ok, ret) ← safe.execTransactionFromModuleReturnData token 0
+      (abiEncodeCall TRANSFER [recipient, amt]) 0
+    if !ok then
+      revertBytes ret
+    return bytesLength ret
+
   -- A method without returns.
   function reentrancy_trusted notifyVia (safe : ISafe, data : Bytes) : Unit := do
     safe.notify data
@@ -66,9 +97,10 @@ verity_contract InterfaceBytesCallSmoke where
 
 Reference bytes from Foundry (`cast calldata`):
 `cast calldata "transfer(address,uint256)" 0x…aa 5`,
-`cast calldata "swap(uint8,bytes,uint256)" 2 0x0102…21 7` (and `0x`), and
-`cast calldata "execTransactionFromModuleReturnData(address,uint256,bytes,uint8)" 0x…bb 0
-<transfer calldata> 0`. -/
+`cast calldata "swap(uint8,bytes,uint256)" 2 0x0102…21 7` (and `0x`),
+`cast calldata "swap(uint256,uint256,address,bytes)" 1 2 0x…cc 0x`, and
+`cast calldata "execTransactionFromModuleReturnData(address,uint256,bytes,uint8)"` of
+`0x…bb 0 <transfer calldata> 0`, `0x…bb 0 <swap calldata> 0` and `0x…c0 9 0x 0`. -/
 
 private def hexNibble (c : Char) : Nat :=
   if c.isDigit then c.toNat - '0'.toNat else c.toLower.toNat - 'a'.toNat + 10
@@ -113,6 +145,44 @@ private def transferCalldataHex : String :=
     "a9059cbb00000000000000000000000000000000000000000000000000000000" ++
     "000000aa00000000000000000000000000000000000000000000000000000000" ++
     "0000000500000000000000000000000000000000000000000000000000000000")
+
+private def pairSwapCalldataHex : String :=
+  "0x022c0d9f" ++
+  "0000000000000000000000000000000000000000000000000000000000000001" ++
+  "0000000000000000000000000000000000000000000000000000000000000002" ++
+  "00000000000000000000000000000000000000000000000000000000000000cc" ++
+  "0000000000000000000000000000000000000000000000000000000000000080" ++
+  "0000000000000000000000000000000000000000000000000000000000000000"
+
+-- An empty `bytes` item: head = tail offset, tail = a zero length word, no data.
+#guard abiCallBytes 0x022c0d9f [.word 1, .word 2, .word 0xcc, .bytes emptyBytes] ==
+  hexBytes pairSwapCalldataHex
+
+#guard abiCallBytes 0x5229073f
+    [.word 0xbb, .word 0,
+      .bytes (abiEncodeCall 0x022c0d9f [.word 1, .word 2, .word 0xcc, .bytes emptyBytes]),
+      .word 0] ==
+  hexBytes ("0x5229073f" ++
+    "00000000000000000000000000000000000000000000000000000000000000bb" ++
+    "0000000000000000000000000000000000000000000000000000000000000000" ++
+    "0000000000000000000000000000000000000000000000000000000000000080" ++
+    "0000000000000000000000000000000000000000000000000000000000000000" ++
+    "00000000000000000000000000000000000000000000000000000000000000a4" ++
+    (pairSwapCalldataHex.drop 2).toString ++
+    "00000000000000000000000000000000000000000000000000000000")
+
+-- An empty `bytes` argument (ETH with no data).
+#guard abiCallBytes 0x5229073f [.word 0xc0, .word 9, .bytes emptyBytes, .word 0] ==
+  hexBytes ("0x5229073f" ++
+    "00000000000000000000000000000000000000000000000000000000000000c0" ++
+    "0000000000000000000000000000000000000000000000000000000000000009" ++
+    "0000000000000000000000000000000000000000000000000000000000000080" ++
+    "0000000000000000000000000000000000000000000000000000000000000000" ++
+    "0000000000000000000000000000000000000000000000000000000000000000")
+
+-- The `Bytes32` constant selector is its high four bytes.
+#guard abiSelectorOfWord InterfaceBytesCallSmoke.PAIR_SWAP.val = 0x022c0d9f
+#guard abiSelectorOfWord InterfaceBytesCallSmoke.TRANSFER.val = 0xa9059cbb
 
 /-! ### Executables: one journal entry with the ABI bytes, answered by the adversary -/
 
@@ -176,6 +246,18 @@ private def forwardRun (adv : AdversaryModel) :=
               "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20" ++
               "2100000000000000000000000000000000000000000000000000000000000000"))),
             .word 0]]
+  | .revert _ _ => false
+
+-- The executable journals the same bytes for the built payload with an empty item.
+#guard
+  match InterfaceBytesCallSmoke.pairSwapVia
+      (ExecutableCallContext.ofAdversary (boolBytesAdversary true []))
+      (Verity.wordToAddress 0x5afe) (Verity.wordToAddress 0xbb) 1 2 (Verity.wordToAddress 0xcc)
+      Verity.defaultState with
+  | .success _ s =>
+      s.calls.map (·.calldata) ==
+        [abiCallBytes 0x5229073f [.word 0xbb, .word 0,
+          .bytes (byteArrayOfValues (hexBytes pairSwapCalldataHex)), .word 0]]
   | .revert _ _ => false
 
 end Contracts.Smoke

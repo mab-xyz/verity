@@ -1106,6 +1106,14 @@ def abiCallBytes (selector : Nat) (args : List AbiCallArg) : List Nat :=
 def abiEncodeCall (selector : Nat) (args : List AbiCallArg) : ByteArray :=
   byteArrayOfValues (abiCallBytes selector args)
 
+/-- `emptyBytes` in contract code: Solidity's `""` as a `bytes` argument. -/
+def emptyBytes : ByteArray := ByteArray.empty
+
+/-- The selector named by a word: the word itself when below `2^32`, else its
+high four bytes (a `bytes4` selector stored left-aligned in a `Bytes32`). -/
+def abiSelectorOfWord (word : Nat) : Nat :=
+  if word < 2 ^ 32 then word else word / 2 ^ 224
+
 /-- Decode a Solidity `(bool, bytes)` return from returndata bytes with solc's
 checks: at least two head words, a boolean word in `{0, 1}`, an offset below
 `2^64` whose length word fits, a length below `2^64` whose data fits. Any

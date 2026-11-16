@@ -3551,14 +3551,26 @@ private def abiFrameExecutableCall? (externalDecls : Array ExternalDecl)
     if ty == .bytes then
       match abiEncodeCallSyntax? arg with
       | some (sel, items) =>
-          let itemSelector ← abiEncodeCallSelector sel
+          -- A constant selector is the contract constant itself (`Contracts.abiSelectorOfWord`
+          -- of its word), as the compilation model reads it from the constant's literal.
+          let itemSelector ←
+            match stripParens sel with
+            | `(term| $n:num) => pure (natTerm n.getNat)
+            | _ => `(_root_.Contracts.abiSelectorOfWord (_root_.Contracts.externalArgWord $sel).val)
           let itemTerms ← items.mapM fun item => do
+            if isEmptyBytesTerm params item then
+              `(_root_.Contracts.AbiCallArg.bytes _root_.Contracts.emptyBytes)
+            else
             match directParamNameWithType? params item with
             | some (_, .bytes) => `(_root_.Contracts.AbiCallArg.bytes $item)
             | _ => `(_root_.Contracts.AbiCallArg.word (_root_.Contracts.externalArgWord $item))
           `(_root_.Contracts.AbiCallArg.bytes
-              (_root_.Contracts.abiEncodeCall $(natTerm itemSelector) [ $[$itemTerms],* ]))
-      | none => `(_root_.Contracts.AbiCallArg.bytes $arg)
+              (_root_.Contracts.abiEncodeCall $itemSelector [ $[$itemTerms],* ]))
+      | none =>
+          if isEmptyBytesTerm params arg then
+            `(_root_.Contracts.AbiCallArg.bytes _root_.Contracts.emptyBytes)
+          else
+            `(_root_.Contracts.AbiCallArg.bytes $arg)
     else
       let tyTerm ← contractValueTypeTerm ty
       `(_root_.Contracts.AbiCallArg.word (_root_.Contracts.externalArgWord ($arg : $tyTerm)))

@@ -371,21 +371,26 @@ typed-interface method may take `bytes` arguments and return `(bool, bytes)`.
 A `bytes` argument is either a `bytes` parameter of the calling function
 (`{name}_data_offset` / `{name}_length`, from calldata or memory) or a payload
 built in place, `abi.encodeWithSelector(selector, items...)`, whose items are
-words or `bytes` parameters. The generated Yul keeps few locals alive (one
+words, `bytes` parameters or empty `bytes`; an argument may also be empty
+`bytes` (Solidity's `""`: a length word `0`, no data). The generated Yul keeps few locals alive (one
 frame pointer and one running tail offset per nesting level), so that calls
 with many arguments stay within the EVM stack. -/
 
-/-- An item of a payload built in place: a word, or a `bytes` parameter. -/
+/-- An item of a payload built in place: a word, a `bytes` parameter, or empty
+`bytes`. -/
 inductive AbiCallItemShape where
   | word
   | bytesParam (name : String)
+  | emptyBytes
   deriving Repr, BEq, DecidableEq
 
 /-- An argument of an ABI-frame call: a word (the next `Expr` argument), a
-`bytes` parameter, or a payload `abi.encodeWithSelector(selector, items...)`. -/
+`bytes` parameter, empty `bytes`, or a payload
+`abi.encodeWithSelector(selector, items...)`. -/
 inductive AbiCallArgShape where
   | word
   | bytesParam (name : String)
+  | emptyBytes
   | encodedCall (selector : Nat) (items : List AbiCallItemShape)
   deriving Repr, BEq, DecidableEq
 
@@ -402,11 +407,11 @@ inductive AbiCallReturnShape where
 
 def AbiCallItemShape.wordCount : AbiCallItemShape → Nat
   | .word => 1
-  | .bytesParam _ => 0
+  | .bytesParam _ | .emptyBytes => 0
 
 def AbiCallArgShape.wordCount : AbiCallArgShape → Nat
   | .word => 1
-  | .bytesParam _ => 0
+  | .bytesParam _ | .emptyBytes => 0
   | .encodedCall _ items => (items.map AbiCallItemShape.wordCount).sum
 
 /-- The word array holding the bytes of a `boolBytes` return named `bytesName`. -/
@@ -444,6 +449,11 @@ private def abiBytesTail (ctx : CompilationContext) (base : YulExpr) (tailVar : 
     YulStmt.assign tailVar (abiCall "add" [abiId tailVar,
       abiCall "add" [abiLit 32, abiPad32 length]])]
 
+/-- The tail of empty `bytes`: a zero length word and no data. -/
+private def abiEmptyBytesTail (base : YulExpr) (tailVar : String) : List YulStmt :=
+  [abiStore (abiCall "add" [base, abiId tailVar]) (abiLit 0),
+   YulStmt.assign tailVar (abiCall "add" [abiId tailVar, abiLit 32])]
+
 /-- Encode the heads and tails of `items` in the argument block at `base`, with
 running tail offset `tailVar` (declared here); `words` are the item words. -/
 private def abiEncodeItemsAt (ctx : CompilationContext) (base : YulExpr) (tailVar : String)
@@ -462,6 +472,8 @@ private def abiEncodeItemsAt (ctx : CompilationContext) (base : YulExpr) (tailVa
     | .bytesParam name =>
         stmts := stmts ++ [abiStore head (abiId tailVar)] ++
           abiBytesTail ctx base tailVar (abiId s!"{name}_data_offset") (abiId s!"{name}_length")
+    | .emptyBytes =>
+        stmts := stmts ++ [abiStore head (abiId tailVar)] ++ abiEmptyBytesTail base tailVar
   pure stmts
 
 /-- Yul of `abiCallModule` over its compiled arguments `[target] ++ words`. -/
@@ -495,6 +507,8 @@ def abiCallBody (ctx : CompilationContext) (selector : Nat) (shapes : List AbiCa
     | .bytesParam name =>
         encode := encode ++ [abiStore head (abiId tailVar)] ++
           abiBytesTail ctx base tailVar (abiId s!"{name}_data_offset") (abiId s!"{name}_length")
+    | .emptyBytes =>
+        encode := encode ++ [abiStore head (abiId tailVar)] ++ abiEmptyBytesTail base tailVar
     | .encodedCall sel items =>
         if sel ≥ 2 ^ 32 then
           throw "externalCallAbi: encoded-call selector exceeds 4 bytes"
