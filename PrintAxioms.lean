@@ -9113,6 +9113,9 @@ Compiler.Yul.CertifiedPatchPack.append_apply_eq
 
 -- Contracts/Common.lean
 Contracts.commonExternalCall_apply
+Contracts.abiCallSite_journal
+Contracts.externalCallAbiBoolBytesTo_journal
+Contracts.externalCallAbiTo_journal
 Contracts.ExecutableCallContext.withViewLinks_adversary
 -- Contracts.uint256_ofNat_val  -- private
 -- Contracts.address_ofNat_toNat  -- private
@@ -12079,4 +12082,4 @@ run_cmd do
     for line in lines do
       liftIO <| IO.println line
 
--- Total: 11243 theorems/lemmas (8743 public, 2500 private, 0 sorry'd)
+-- Total: 11246 theorems/lemmas (8746 public, 2500 private, 0 sorry'd)
