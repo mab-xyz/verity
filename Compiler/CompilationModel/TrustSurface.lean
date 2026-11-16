@@ -151,7 +151,7 @@ def collectLowLevelExprMechanics : Expr → List String
   | .literal _ | .param _ | .constructorArg _ | .immutable _
   | .storage _ | .storageAddr _
   | .caller | .contractAddress | .txOrigin | .chainid | .msgValue | .selfBalance
-  | .blockTimestamp | .blockNumber | .baseFee | .gasPrice | .calldatasize
+  | .blockTimestamp | .blockNumber | .baseFee | .gasPrice | .blockCoinbase | .calldatasize
   | .localVar _ | .arrayLength _ | .memoryArrayLength _
   | .paramDynamicHeadWord _ _ | .paramDynamicMemberLength _ _
   | .paramDynamicMemberDataOffset _ _ | .paramDynamicStaticComposite _ _
@@ -537,6 +537,7 @@ private partial def collectRuntimeIntrospectionExprMechanics : Expr → List Str
   | .blobbasefee => ["blobbasefee"]
   | .baseFee => ["baseFee"]
   | .gasPrice => ["gasPrice"]
+  | .blockCoinbase => ["blockCoinbase"]
   | .externalCall _ args
   | .internalCall _ args =>
       args.flatMap collectRuntimeIntrospectionExprMechanics
@@ -607,7 +608,7 @@ private def collectRuntimeIntrospectionMechanicsFromStmts (stmts : List Stmt) : 
                 if mechanic == .contractAddress || mechanic == .chainid ||
                     mechanic == .selfBalance || mechanic == .blockNumber ||
                     mechanic == .blobbasefee || mechanic == .baseFee ||
-                    mechanic == .gasPrice then
+                    mechanic == .gasPrice || mechanic == .blockCoinbase then
                   some mechanic.toReportString
                 else
                   none)
@@ -874,7 +875,8 @@ private def boundaryClassFromAxioms (axioms : List String) : String :=
 
 private def boundaryClassFromModule (mod : ECM.ExternalCallModule) : String :=
   match mod.name with
-  | "ecrecover" | "sha256Memory" | "sha256" | "bn256Add" | "bn256ScalarMul" | "bn256Pairing" =>
+  | "ecrecover" | "sha256Memory" | "sha256" | "bn256Add" | "bn256ScalarMul" | "bn256Pairing"
+  | "revertMemoryBytes" =>
       "compilerIntrinsic"
   | "oracleReadUint256" | "oracleSummary" =>
       "oracleSummary"
@@ -888,7 +890,8 @@ private def boundaryClassFromModule (mod : ECM.ExternalCallModule) : String :=
   | "convertToAssets" | "convertToShares" | "totalAssets" | "asset"
   | "maxDeposit" | "maxMint" | "maxWithdraw" | "maxRedeem" | "deposit" =>
       "tokenModel"
-  | "externalCallWithReturn" | "externalCallWithReturns" | "externalCallNoReturn" | "callWithValue" | "callWithValueBytes"
+  | "externalCallWithReturn" | "externalCallWithReturns" | "externalCallNoReturn" | "externalCallAbi"
+  | "callWithValue" | "callWithValueBytes"
   | "bubblingValueCall" | "bubblingValueCallNoOutput" | "selfDelegateMulticallBytes" =>
       "abiBoundary"
   | "create2Deploy" | "sstore2ReadCode" =>

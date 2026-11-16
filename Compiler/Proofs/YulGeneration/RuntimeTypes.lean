@@ -34,6 +34,7 @@ structure YulState where
   blockNumber : Nat := 0
   chainId : Nat := 0
   blobBaseFee : Nat := 0
+  blockCoinbase : Nat := 0
   events : List (List Nat) := []
   deriving Nonempty
 
@@ -52,6 +53,7 @@ structure YulTransaction where
   blockNumber : Nat := 0
   chainId : Nat := 0
   blobBaseFee : Nat := 0
+  blockCoinbase : Nat := 0
   functionSelector : Nat
   args : List Nat
   deriving Repr
@@ -65,6 +67,7 @@ structure YulTransaction where
     blockNumber := tx.blockNumber
     chainId := tx.chainId
     blobBaseFee := tx.blobBaseFee
+    blockCoinbase := tx.blockCoinbase
     functionSelector := tx.functionSelector
     args := tx.args }
 
@@ -125,6 +128,7 @@ def YulState.initial (tx : YulTransaction) (storage : IRStorageSlot → IRStorag
     blockNumber := tx.blockNumber
     chainId := tx.chainId
     blobBaseFee := tx.blobBaseFee
+    blockCoinbase := tx.blockCoinbase
     events := events }
 
 /-- Lookup variable in state. -/

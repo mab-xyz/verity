@@ -44,6 +44,8 @@ structure IRState where
   blobBaseFee : Nat := 0
   /-- tx.origin seen by `origin()`. -/
   txOrigin : Nat := 0
+  /-- block.coinbase seen by `coinbase()`. -/
+  blockCoinbase : Nat := 0
   /-- Function selector. -/
   selector : Nat
   /-- Emitted log records for this execution. -/
@@ -70,6 +72,7 @@ def IRState.initial (sender : Nat) : IRState :=
     chainId := 0
     blobBaseFee := 0
     txOrigin := 0
+    blockCoinbase := 0
     selector := 0
     events := [] }
 
@@ -122,6 +125,7 @@ structure IRTransaction where
   chainId : Nat := 0
   blobBaseFee : Nat := 0
   txOrigin : Nat := 0
+  blockCoinbase : Nat := 0
   functionSelector : Nat
   args : List Nat
   deriving Repr

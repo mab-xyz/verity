@@ -21,6 +21,7 @@ def evalBuiltinCallWithEvmYulLeanContext
     (chainId : Nat)
     (blobBaseFee : Nat)
     (txOrigin : Nat)
+    (blockCoinbase : Nat)
     (selector : Nat)
     (calldata : List Nat)
     (func : String)
@@ -58,6 +59,10 @@ def evalBuiltinCallWithEvmYulLeanContext
     match argVals with
     | [] => some (toWord txOrigin)
     | _ => none
+  else if func = "coinbase" then
+    match argVals with
+    | [] => some (toWord blockCoinbase)
+    | _ => none
   else if func = "calldatasize" then
     match argVals with
     | [] => some (toWord (4 + calldata.length * 32))
@@ -79,7 +84,7 @@ def evalBuiltinCallWithEvmYulLean
     (calldata : List Nat)
     (func : String)
     (argVals : List Nat) : Option Nat :=
-  evalBuiltinCallWithEvmYulLeanContext storage sender 0 0 0 0 0 0 0 selector calldata func argVals
+  evalBuiltinCallWithEvmYulLeanContext storage sender 0 0 0 0 0 0 0 0 selector calldata func argVals
 
 def evalBuiltinCall
     (storage : IRStorageSlot → IRStorageWord)
@@ -103,11 +108,13 @@ def evalBuiltinCall
 /-- Context wrapper for `evalBuiltinCallViaEvmYulLean_byte_uint256`. -/
 @[simp] theorem evalBuiltinCallWithEvmYulLeanContext_byte_uint256
     (storage : IRStorageSlot → IRStorageWord)
-    (sender msgValue thisAddress blockTimestamp blockNumber chainId blobBaseFee txOrigin selector : Nat)
+    (sender msgValue thisAddress blockTimestamp blockNumber chainId blobBaseFee txOrigin : Nat)
+    (blockCoinbase selector : Nat)
     (calldata : List Nat)
     (index value : Nat) :
     evalBuiltinCallWithEvmYulLeanContext storage sender msgValue thisAddress blockTimestamp
-      blockNumber chainId blobBaseFee txOrigin selector calldata "byte" [index, value] =
+      blockNumber chainId blobBaseFee txOrigin blockCoinbase selector calldata "byte"
+      [index, value] =
       some (Verity.Core.Uint256.byte
         (Verity.Core.Uint256.ofNat (index % Compiler.Constants.evmModulus))
         (Verity.Core.Uint256.ofNat (value % Compiler.Constants.evmModulus))).val := by

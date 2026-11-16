@@ -41,3 +41,5 @@ import Contracts.Smoke.StructBytesMemberCopySmoke
 import Contracts.Smoke.Create2AddressSmoke
 import Contracts.Smoke.SpillFreeMemorySmoke
 import Contracts.Smoke.LoopSemanticsSmoke
+import Contracts.Smoke.InterfaceBytesCallSmoke
+import Contracts.Smoke.CoinbaseSmoke

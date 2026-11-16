@@ -2631,7 +2631,7 @@ def nativeRuntimePathUsesBuiltin
     (yulFunctionBodies runtimeCode) runtimeCode
 
 def unsupportedNativeHeaderBuiltinNames : List String :=
-  ["coinbase", "difficulty", "prevrandao", "gaslimit", "basefee", "gasprice",
+  ["difficulty", "prevrandao", "gaslimit", "basefee", "gasprice",
    "selfbalance"]
 
 def nativeRuntimePathUsesAnyBuiltin
@@ -2883,6 +2883,18 @@ def validateNativeRuntimeEnvironment
     (observableSlots : List Nat) :
     (initialState contract tx storage observableSlots).sharedState.executionEnv.header.number =
       tx.blockNumber := by
+  simp [initialState, EvmYul.Yul.State.sharedState, YulState.initial, toSharedState,
+    mkBlockHeader]
+
+/-- The native block header carries the transaction's `blockCoinbase` as its
+    beneficiary, which is what EVMYulLean's `coinbase()` reads. -/
+@[simp] theorem initialState_blockCoinbase
+    (contract : EvmYul.Yul.Ast.YulContract)
+    (tx : YulTransaction)
+    (storage : IRStorageSlot → IRStorageWord)
+    (observableSlots : List Nat) :
+    (initialState contract tx storage observableSlots).sharedState.executionEnv.header.beneficiary =
+      natToAddress tx.blockCoinbase := by
   simp [initialState, EvmYul.Yul.State.sharedState, YulState.initial, toSharedState,
     mkBlockHeader]
 
