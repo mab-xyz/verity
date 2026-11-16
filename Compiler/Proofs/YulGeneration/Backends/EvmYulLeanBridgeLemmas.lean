@@ -202,6 +202,10 @@ EndToEnd target and by reporting scripts that audit available builtin coverage.
     evalPureBuiltinViaEvmYulLean "blobbasefee" args = none := by
   cases args <;> rfl
 
+@[simp] theorem evalPureBuiltinViaEvmYulLean_coinbase (args : List Nat) :
+    evalPureBuiltinViaEvmYulLean "coinbase" args = none := by
+  cases args <;> rfl
+
 @[simp] theorem evalPureBuiltinViaEvmYulLean_calldataload (args : List Nat) :
     evalPureBuiltinViaEvmYulLean "calldataload" args = none := by
   cases args with

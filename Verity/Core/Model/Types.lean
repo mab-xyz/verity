@@ -806,6 +806,7 @@ inductive LowLevelMechanic where
   | blockNumber
   | baseFee
   | gasPrice
+  | blockCoinbase
   | storageWrite
   deriving Repr, BEq, Inhabited
 
@@ -839,6 +840,7 @@ def toReportString : LowLevelMechanic → String
   | .blockNumber => "blockNumber"
   | .baseFee => "baseFee"
   | .gasPrice => "gasPrice"
+  | .blockCoinbase => "blockCoinbase"
   | .storageWrite => "storageWrite"
 
 instance : ToString LowLevelMechanic where
@@ -965,6 +967,9 @@ inductive Expr
   /-- `tx.gasprice` — the effective gas price of the transaction.
       Lowers to the EVM `gasprice()` opcode. -/
   | gasPrice
+  /-- `block.coinbase` — the current block's beneficiary address.
+      Lowers to the EVM `coinbase()` opcode. -/
+  | blockCoinbase
   | mload (offset : Expr)
   | tload (offset : Expr)
   | keccak256 (offset size : Expr)
@@ -1169,7 +1174,7 @@ def children : Expr → List Expr
   | .literal _ | .param _ | .constructorArg _ | .immutable _ | .storage _ | .storageAddr _
   | .caller | .contractAddress | .txOrigin | .chainid | .msgValue
   | .selfBalance | .blockTimestamp | .blockNumber | .blobbasefee | .baseFee | .gasPrice
-  | .calldatasize | .returndataSize | .localVar _
+  | .blockCoinbase | .calldatasize | .returndataSize | .localVar _
   | .arrayLength _ | .memoryArrayLength _
   | .paramDynamicHeadWord _ _ | .paramDynamicMemberLength _ _
   | .paramDynamicMemberDataOffset _ _ | .paramDynamicStaticComposite _ _

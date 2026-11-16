@@ -452,7 +452,7 @@
         },
         {
           "name": "support.function.context.verity",
-          "match": "\\b(msgSender|msgValue|selfBalance|blockTimestamp|blockNumber|contractAddress|chainid|blobbasefee|calldataSize|defaultState)\\b"
+          "match": "\\b(msgSender|msgValue|selfBalance|blockTimestamp|blockNumber|contractAddress|chainid|blobbasefee|blockCoinbase|calldataSize|defaultState)\\b"
         },
         {
           "name": "support.function.guard.verity",

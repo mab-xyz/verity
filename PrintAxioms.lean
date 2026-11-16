@@ -2133,6 +2133,7 @@ Compiler.Proofs.IRGeneration.FunctionBody.evalIRExpr_blockNumber_of_runtimeState
 Compiler.Proofs.IRGeneration.FunctionBody.evalIRExpr_chainid_of_runtimeStateMatchesIR
 Compiler.Proofs.IRGeneration.FunctionBody.evalIRExpr_blobbasefee_of_runtimeStateMatchesIR
 Compiler.Proofs.IRGeneration.FunctionBody.evalIRExpr_txOrigin_of_runtimeStateMatchesIR
+Compiler.Proofs.IRGeneration.FunctionBody.evalIRExpr_blockCoinbase_of_runtimeStateMatchesIR
 Compiler.Proofs.IRGeneration.FunctionBody.eval_compileExpr_caller
 Compiler.Proofs.IRGeneration.FunctionBody.eval_compileExpr_contractAddress
 Compiler.Proofs.IRGeneration.FunctionBody.eval_compileExpr_msgValue
@@ -2141,6 +2142,7 @@ Compiler.Proofs.IRGeneration.FunctionBody.eval_compileExpr_blockNumber
 Compiler.Proofs.IRGeneration.FunctionBody.eval_compileExpr_chainid
 Compiler.Proofs.IRGeneration.FunctionBody.eval_compileExpr_blobbasefee
 Compiler.Proofs.IRGeneration.FunctionBody.eval_compileExpr_txOrigin
+Compiler.Proofs.IRGeneration.FunctionBody.eval_compileExpr_blockCoinbase
 Compiler.Proofs.IRGeneration.FunctionBody.evalIRExpr_calldatasize_of_runtimeStateMatchesIR
 Compiler.Proofs.IRGeneration.FunctionBody.eval_compileExpr_calldatasize
 Compiler.Proofs.IRGeneration.FunctionBody.evalIRExpr_returndataSize_of_runtimeStateMatchesIR
@@ -2385,6 +2387,7 @@ Compiler.Proofs.IRGeneration.FunctionBody.evalExpr_lt_evmModulus_core_onExpr
 -- Compiler.Proofs.IRGeneration.FunctionBody.compileExprSound_caller  -- private
 -- Compiler.Proofs.IRGeneration.FunctionBody.compileExprSound_contractAddress  -- private
 -- Compiler.Proofs.IRGeneration.FunctionBody.compileExprSound_txOrigin  -- private
+-- Compiler.Proofs.IRGeneration.FunctionBody.compileExprSound_blockCoinbase  -- private
 -- Compiler.Proofs.IRGeneration.FunctionBody.compileExprSound_msgValue  -- private
 -- Compiler.Proofs.IRGeneration.FunctionBody.compileExprSound_blockTimestamp  -- private
 -- Compiler.Proofs.IRGeneration.FunctionBody.compileExprSound_blockNumber  -- private
@@ -4426,6 +4429,8 @@ Compiler.Proofs.IRGeneration.SourceSemantics.bindExternalParams_eq_none_of_not_l
 Compiler.Proofs.IRGeneration.SourceSemantics.bindSupportedParams_take_param_length
 Compiler.Proofs.IRGeneration.SourceSemantics.returndata_withTransactionContext
 Compiler.Proofs.IRGeneration.SourceSemantics.returndata_withConstructorTransactionContext
+Compiler.Proofs.IRGeneration.SourceSemantics.blockCoinbase_withTransactionContext
+Compiler.Proofs.IRGeneration.SourceSemantics.evalExpr_blockCoinbase
 Compiler.Proofs.IRGeneration.SourceSemantics.storage_withTransactionContext
 Compiler.Proofs.IRGeneration.SourceSemantics.storageAddr_withTransactionContext
 Compiler.Proofs.IRGeneration.SourceSemantics.storageArray_withTransactionContext
@@ -6393,6 +6398,7 @@ Compiler.Proofs.YulGeneration.Backends.evalPureBuiltinViaEvmYulLean_timestamp
 Compiler.Proofs.YulGeneration.Backends.evalPureBuiltinViaEvmYulLean_number
 Compiler.Proofs.YulGeneration.Backends.evalPureBuiltinViaEvmYulLean_chainid
 Compiler.Proofs.YulGeneration.Backends.evalPureBuiltinViaEvmYulLean_blobbasefee
+Compiler.Proofs.YulGeneration.Backends.evalPureBuiltinViaEvmYulLean_coinbase
 Compiler.Proofs.YulGeneration.Backends.evalPureBuiltinViaEvmYulLean_calldataload
 Compiler.Proofs.YulGeneration.Backends.evalPureBuiltinViaEvmYulLean_calldatasize
 Compiler.Proofs.YulGeneration.Backends.evalPureBuiltinViaEvmYulLean_mappingSlot
@@ -6755,6 +6761,7 @@ Compiler.Proofs.YulGeneration.Backends.Native.NativePrimCallPreservesWord_blobba
 Compiler.Proofs.YulGeneration.Backends.Native.NativePrimCallPreservesWord_blobbasefee_values
 Compiler.Proofs.YulGeneration.Backends.Native.NativePrimCallPreservesWord_gasprice
 Compiler.Proofs.YulGeneration.Backends.Native.NativePrimCallPreservesWord_coinbase
+Compiler.Proofs.YulGeneration.Backends.Native.NativePrimCallPreservesWord_coinbase_values
 Compiler.Proofs.YulGeneration.Backends.Native.NativePrimCallPreservesWord_gaslimit
 Compiler.Proofs.YulGeneration.Backends.Native.NativePrimCallPreservesWord_selfbalance
 Compiler.Proofs.YulGeneration.Backends.Native.NativePrimCallPreservesWord_unary_same_state
@@ -7555,6 +7562,7 @@ Compiler.Proofs.YulGeneration.Backends.lookupRuntimePrimOp_timestamp
 Compiler.Proofs.YulGeneration.Backends.lookupRuntimePrimOp_number
 Compiler.Proofs.YulGeneration.Backends.lookupRuntimePrimOp_chainid
 Compiler.Proofs.YulGeneration.Backends.lookupRuntimePrimOp_blobbasefee
+Compiler.Proofs.YulGeneration.Backends.lookupRuntimePrimOp_coinbase
 Compiler.Proofs.YulGeneration.Backends.lookupRuntimePrimOp_tload
 Compiler.Proofs.YulGeneration.Backends.lookupRuntimePrimOp_mload
 Compiler.Proofs.YulGeneration.Backends.lookupRuntimePrimOp_extcodesize
@@ -7750,6 +7758,7 @@ Compiler.Proofs.YulGeneration.Backends.Native.primCall_chainid_any_ok
 Compiler.Proofs.YulGeneration.Backends.Native.primCall_blobbasefee_any_ok
 Compiler.Proofs.YulGeneration.Backends.Native.primCall_gasprice_ok
 Compiler.Proofs.YulGeneration.Backends.Native.primCall_coinbase_ok
+Compiler.Proofs.YulGeneration.Backends.Native.primCall_coinbase_any_ok
 Compiler.Proofs.YulGeneration.Backends.Native.primCall_gaslimit_ok
 Compiler.Proofs.YulGeneration.Backends.Native.primCall_selfbalance_ok
 Compiler.Proofs.YulGeneration.Backends.Native.primCall_and_ok
@@ -8080,6 +8089,7 @@ Compiler.Proofs.YulGeneration.Backends.Native.initialState_codeOwner
 Compiler.Proofs.YulGeneration.Backends.Native.initialState_weiValue
 Compiler.Proofs.YulGeneration.Backends.Native.initialState_blockTimestamp
 Compiler.Proofs.YulGeneration.Backends.Native.initialState_blockNumber
+Compiler.Proofs.YulGeneration.Backends.Native.initialState_blockCoinbase
 Compiler.Proofs.YulGeneration.Backends.Native.initialState_calldata
 Compiler.Proofs.YulGeneration.Backends.Native.initialState_calldataSize
 
@@ -8114,6 +8124,7 @@ Compiler.Proofs.YulGeneration.Backends.Native.step_blobbasefee_ok
 Compiler.Proofs.YulGeneration.Backends.Native.step_blobbasefee_any
 Compiler.Proofs.YulGeneration.Backends.Native.step_gasprice_ok
 Compiler.Proofs.YulGeneration.Backends.Native.step_coinbase_ok
+Compiler.Proofs.YulGeneration.Backends.Native.step_coinbase_any
 Compiler.Proofs.YulGeneration.Backends.Native.step_gaslimit_ok
 Compiler.Proofs.YulGeneration.Backends.Native.step_selfbalance_ok
 Compiler.Proofs.YulGeneration.Backends.Native.step_and_ok
@@ -9776,6 +9787,7 @@ Verity.ContractState.chainId_writeSlot
 Verity.ContractState.blobBaseFee_writeSlot
 Verity.ContractState.baseFee_writeSlot
 Verity.ContractState.gasPrice_writeSlot
+Verity.ContractState.blockCoinbase_writeSlot
 Verity.ContractState.calldataSize_writeSlot
 Verity.ContractState.calldata_writeSlot
 Verity.ContractState.memory_writeSlot
@@ -9844,6 +9856,7 @@ Verity.ContractState.chainId_writeAddrSlot
 Verity.ContractState.blobBaseFee_writeAddrSlot
 Verity.ContractState.baseFee_writeAddrSlot
 Verity.ContractState.gasPrice_writeAddrSlot
+Verity.ContractState.blockCoinbase_writeAddrSlot
 Verity.ContractState.calldataSize_writeAddrSlot
 Verity.ContractState.storage_writeMap
 Verity.ContractState.storageAddr_writeMap
@@ -9862,6 +9875,7 @@ Verity.ContractState.chainId_writeMap
 Verity.ContractState.blobBaseFee_writeMap
 Verity.ContractState.baseFee_writeMap
 Verity.ContractState.gasPrice_writeMap
+Verity.ContractState.blockCoinbase_writeMap
 Verity.ContractState.calldataSize_writeMap
 Verity.ContractState.calldata_writeMap
 Verity.ContractState.knownAddresses_writeMap
@@ -9882,6 +9896,7 @@ Verity.ContractState.blockTimestamp_writeMapUint
 Verity.ContractState.blockNumber_writeMapUint
 Verity.ContractState.baseFee_writeMapUint
 Verity.ContractState.gasPrice_writeMapUint
+Verity.ContractState.blockCoinbase_writeMapUint
 Verity.ContractState.events_writeMapUint
 Verity.ContractState.codeSize_writeMapUint
 Verity.ContractState.returndata_writeMapUint
@@ -9950,6 +9965,7 @@ Verity.ContractState.chainId_writeMapChain
 Verity.ContractState.blobBaseFee_writeMapChain
 Verity.ContractState.baseFee_writeMapChain
 Verity.ContractState.gasPrice_writeMapChain
+Verity.ContractState.blockCoinbase_writeMapChain
 Verity.ContractState.knownAddresses_writeMapChain
 Verity.ContractState.events_writeMapChain
 Verity.ContractState.calls_writeMapChain
@@ -9981,6 +9997,7 @@ Verity.ContractState.blockTimestamp_writeMap2
 Verity.ContractState.blockNumber_writeMap2
 Verity.ContractState.baseFee_writeMap2
 Verity.ContractState.gasPrice_writeMap2
+Verity.ContractState.blockCoinbase_writeMap2
 Verity.ContractState.events_writeMap2
 Verity.ContractState.codeSize_writeMap2
 Verity.ContractState.returndata_writeMap2
@@ -10075,6 +10092,7 @@ Verity.ContractState.calldataSize_modifyTransientSlots
 Verity.ContractState.events_modifyTransientSlots
 Verity.ContractState.memory_modifyTransientSlots
 Verity.ContractState.txOrigin_modifyTransientSlots
+Verity.ContractState.blockCoinbase_modifyTransientSlots
 Verity.ContractState.calldata_modifyTransientSlots
 Verity.ContractState.knownAddresses_modifyTransientSlots
 Verity.ContractState.calls_modifyTransientSlots
@@ -10211,6 +10229,7 @@ Verity.blockNumber_run
 Verity.blobbasefee_run
 Verity.baseFee_run
 Verity.gasPrice_run
+Verity.blockCoinbase_run
 Verity.chainid_run
 Verity.require_run
 Verity.getStorage_bind_require_run_snd
@@ -10514,6 +10533,7 @@ Compiler.CompilationModel.DenoteExternalCalls.withCallbackContext_blockNumber
 Compiler.CompilationModel.DenoteExternalCalls.withCallbackContext_blobBaseFee
 Compiler.CompilationModel.DenoteExternalCalls.withCallbackContext_baseFee
 Compiler.CompilationModel.DenoteExternalCalls.withCallbackContext_gasPrice
+Compiler.CompilationModel.DenoteExternalCalls.withCallbackContext_blockCoinbase
 Compiler.CompilationModel.DenoteExternalCalls.withCallbackContext_txOrigin
 Compiler.CompilationModel.DenoteExternalCalls.withCallbackContext_knownAddresses
 Compiler.CompilationModel.DenoteExternalCalls.withCallbackContext_events
@@ -10535,6 +10555,7 @@ Compiler.CompilationModel.DenoteExternalCalls.restoreCallbackContext_blockNumber
 Compiler.CompilationModel.DenoteExternalCalls.restoreCallbackContext_blobBaseFee
 Compiler.CompilationModel.DenoteExternalCalls.restoreCallbackContext_baseFee
 Compiler.CompilationModel.DenoteExternalCalls.restoreCallbackContext_gasPrice
+Compiler.CompilationModel.DenoteExternalCalls.restoreCallbackContext_blockCoinbase
 Compiler.CompilationModel.DenoteExternalCalls.restoreCallbackContext_txOrigin
 Compiler.CompilationModel.DenoteExternalCalls.restoreCallbackContext_knownAddresses
 Compiler.CompilationModel.DenoteExternalCalls.restoreCallbackContext_events
@@ -10647,6 +10668,7 @@ Compiler.CompilationModel.DenoteByteExternalCalls.commitCalleeWorld_chainId
 Compiler.CompilationModel.DenoteByteExternalCalls.commitCalleeWorld_blobBaseFee
 Compiler.CompilationModel.DenoteByteExternalCalls.commitCalleeWorld_baseFee
 Compiler.CompilationModel.DenoteByteExternalCalls.commitCalleeWorld_gasPrice
+Compiler.CompilationModel.DenoteByteExternalCalls.commitCalleeWorld_blockCoinbase
 Compiler.CompilationModel.DenoteByteExternalCalls.commitCalleeWorld_calldataSize
 Compiler.CompilationModel.DenoteByteExternalCalls.commitCalleeWorld_calldata
 Compiler.CompilationModel.DenoteByteExternalCalls.commitCalleeWorld_selector
@@ -12079,4 +12101,4 @@ run_cmd do
     for line in lines do
       liftIO <| IO.println line
 
--- Total: 11243 theorems/lemmas (8743 public, 2500 private, 0 sorry'd)
+-- Total: 11265 theorems/lemmas (8764 public, 2501 private, 0 sorry'd)

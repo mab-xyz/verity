@@ -44,6 +44,7 @@ def verity_simp_set : List Lean.Name := [
   ``msgSender,
   ``baseFee,
   ``gasPrice,
+  ``blockCoinbase,
   ``getStorageAddr,
   ``getStorage,
   ``setStorage,
@@ -75,7 +76,8 @@ def verity_simp_set : List Lean.Name := [
 ]
 
 attribute [verity_unfold_simps]
-  msgSender msgValue baseFee gasPrice getStorageAddr getStorage setStorage setStorageAddr
+  msgSender msgValue baseFee gasPrice blockCoinbase
+  getStorageAddr getStorage setStorage setStorageAddr
   getMapping setMapping setMapping2 getMappingUint setMappingUint getMapping2
   ContractState.readSlot ContractState.writeSlot ContractState.readAddrSlot
   ContractState.writeAddrSlot ContractState.readMap ContractState.writeMap

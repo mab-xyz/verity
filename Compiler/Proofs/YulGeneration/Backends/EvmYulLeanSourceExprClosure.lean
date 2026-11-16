@@ -149,6 +149,7 @@ inductive BridgedSourceExpr : Expr → Prop
   -- zero-argument environment / calldata-size reads
   | caller : BridgedSourceExpr .caller
   | txOrigin : BridgedSourceExpr .txOrigin
+  | blockCoinbase : BridgedSourceExpr .blockCoinbase
   | contractAddress : BridgedSourceExpr .contractAddress
   | msgValue : BridgedSourceExpr .msgValue
   | blockTimestamp : BridgedSourceExpr .blockTimestamp
@@ -1230,7 +1231,7 @@ theorem compileExpr_bridgedSource
       ∀ {out : YulExpr}, compileExpr fields src e = .ok out → BridgedExpr out := by
   intro e hE
   induction hE <;> intro out hOk
-  case literal | param | constructorArg | localVar | arrayLength | caller | txOrigin
+  case literal | param | constructorArg | localVar | arrayLength | caller | txOrigin | blockCoinbase
       | contractAddress | msgValue | blockTimestamp | blockNumber | chainid | blobbasefee
       | calldatasize | returndataSize =>
     simp [compileExpr, compileExprWithInternals, Pure.pure, Except.pure] at hOk

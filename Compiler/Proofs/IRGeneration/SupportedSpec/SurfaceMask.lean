@@ -73,7 +73,7 @@ mutual
 /-- Single-pass $\mathcal{O}(|e|)$ catamorphism computing the union of all
 surface bits touched by an expression `e`. -/
 def exprSurfaceMask : Expr → SurfaceMask
-  | .literal _ | .param _ | .caller | .contractAddress | .txOrigin
+  | .literal _ | .param _ | .caller | .contractAddress | .txOrigin | .blockCoinbase
   | .chainid | .msgValue | .blockTimestamp | .blockNumber
   | .blobbasefee | .returndataSize | .localVar _ | .constructorArg _ => 0
   | .calldatasize | .arrayLength _ | .dynamicBytesEq _ _ => bitConstructorRaw
@@ -444,7 +444,8 @@ theorem exprSurfaceMask_subset_of_exprCompileCore
     {e : Expr} (hcore : FunctionBody.ExprCompileCore e) :
     ((exprSurfaceMask e &&& bitConstructorRaw) == exprSurfaceMask e) = true := by
   induction hcore with
-  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin | msgValue
+  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin
+    | blockCoinbase | msgValue
     | blockTimestamp | blockNumber | chainid | blobbasefee | calldatasize | returndataSize =>
       simp [exprSurfaceMask]
   | add _ _ ihL ihR | sub _ _ ihL ihR | mul _ _ ihL ihR | div _ _ ihL ihR | mod _ _ ihL ihR
