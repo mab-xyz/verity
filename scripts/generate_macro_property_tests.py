@@ -2079,6 +2079,10 @@ def _mapping_key_expr(param: ParamDecl, value_expr: str) -> str:
         return f"bytes32(uint256(uint160({value_expr})))"
     if ty in {"Uint256", "Uint8", "EnumUint8", "Bytes32"}:
         return f"bytes32(uint256({value_expr}))"
+    if re.fullmatch(r"Bytes([1-9]|[12][0-9]|3[01])", ty):
+        # Solidity converts `bytesN` to `bytes32` by right-padding: the key
+        # word is the value left-aligned, as in the mapping slot hash.
+        return f"bytes32({value_expr})"
     raise ValueError(f"unsupported Lean key type for generated mapping setup: {ty!r}")
 
 

@@ -2558,6 +2558,12 @@ instance : StorageKey Uint256 where
 instance : StorageKey Address where
   toWord key := key.toNat
 
+/-- Solidity `bytesN` keys hash the value left-aligned in the 32-byte word
+(`keccak256(abi.encode(key, slot))`), which is how the compiled code loads a
+`bytesN` parameter. -/
+instance {n : Nat} : StorageKey (BytesN n) where
+  toWord key := (Verity.Core.BytesN.toUint256 key).val
+
 class StorageWord (α : Type) where
   fromWord : Uint256 → α
   toWord : α → Uint256
@@ -2694,14 +2700,31 @@ family consistently; the macro already fixes the family per storage type. -/
     StorageKey.toWord key = key.toNat := rfl
 @[simp] theorem StorageKey.toWord_uint256 (key : Uint256) :
     StorageKey.toWord key = key.val := rfl
+@[simp] theorem StorageKey.toWord_bytesN {n : Nat} (key : BytesN n) :
+    StorageKey.toWord key = (Verity.Core.BytesN.toUint256 key).val := rfl
+
+/-- Distinct `bytesN` keys (`n ≤ 32`) have distinct key words: left-aligning
+an `8n`-bit payload never overflows the 256-bit word. -/
+theorem StorageKey.toWord_bytesN_injective {n : Nat} (hn : n ≤ 32) :
+    Function.Injective (StorageKey.toWord : BytesN n → Nat) := by
+  have hfit : ∀ key : BytesN n, key.val * 2 ^ (8 * (32 - n)) < Verity.Core.Uint256.modulus :=
+    fun key => by
+      have hpow : 2 ^ (8 * n) * 2 ^ (8 * (32 - n)) = Verity.Core.Uint256.modulus := by
+        rw [← Nat.pow_add]; show _ = 2 ^ 256; congr 1; omega
+      exact hpow ▸ Nat.mul_lt_mul_of_pos_right key.isLt (Nat.two_pow_pos _)
+  rintro ⟨a, ha⟩ ⟨b, hb⟩ h
+  simp only [StorageKey.toWord, Verity.Core.BytesN.toUint256, Verity.Core.Uint256.val_ofNat,
+    Nat.mod_eq_of_lt (hfit ⟨a, ha⟩), Nat.mod_eq_of_lt (hfit ⟨b, hb⟩)] at h
+  cases Nat.eq_of_mul_eq_mul_right (Nat.two_pow_pos _) h
+  rfl
 @[simp] theorem StorageWord.fromWord_uint256 (word : Uint256) :
     StorageWord.fromWord (α := Uint256) word = word := rfl
 @[simp] theorem StorageWord.toWord_uint256 (word : Uint256) :
     StorageWord.toWord word = word := rfl
 
 /-- One word of a hashed-mapping key path. `getMappingN` / `setMappingN` take
-a `List MappingKeyWord`, so `[owner, epoch]` may mix `Address`, `Uint256` and
-`Bytes32` keys (Solidity `mapping(address => mapping(uint256 => uint256))`);
+a `List MappingKeyWord`, so `[owner, epoch]` may mix `Address`, `Uint256`,
+`Bytes32` and `BytesN n` keys (Solidity `mapping(address => mapping(uint256 => uint256))`);
 each element is coerced through `StorageKey.toWord`. -/
 structure MappingKeyWord where
   word : Nat
@@ -2712,6 +2735,10 @@ instance : Coe Address MappingKeyWord where
 
 /-- Also covers `Bytes32` (an abbreviation of `Uint256`). -/
 instance : Coe Uint256 MappingKeyWord where
+  coe key := ⟨StorageKey.toWord key⟩
+
+/-- `CoeOut`: the width `n` is fixed by the source type. -/
+instance {n : Nat} : CoeOut (BytesN n) MappingKeyWord where
   coe key := ⟨StorageKey.toWord key⟩
 
 /-- Key words of a hashed-mapping key path (the symbolic `mapChain` key path). -/
