@@ -44,6 +44,12 @@ theorem require_step {β : Type} {c : Bool} {msg : String} {f : Unit → Contrac
   unfold Verity.bind Verity.require at h
   cases c <;> simp_all
 
+/-- A successful `require` checked its condition and left the state unchanged. -/
+theorem require_success {c : Bool} {msg : String} {s s' : ContractState} {u : Unit}
+    (h : Verity.require c msg s = .success u s') : c = true ∧ s' = s := by
+  unfold Verity.require at h
+  split at h <;> simp_all
+
 /-! ## Results of the executable primitives -/
 
 theorem getStorage_eq (sl : StorageSlot Uint256) (s : ContractState) :
