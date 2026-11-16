@@ -167,6 +167,60 @@ contract InterfaceBytesCallSmokeTest is Test, YulTestBase {
         }
     }
 
+    /// ETH with no data: an empty `bytes` argument is Solidity's `""`.
+    function testEmptyBytesArgumentMatchesSolidity() public {
+        safe.setAnswer(abi.encode(true, bytes("")), false);
+        (bool ok, bytes memory out) = smoke.call(
+            abi.encodeWithSignature("payVia(address,address,uint256)", address(safe), TO, uint256(11))
+        );
+        assertTrue(ok, "payVia reverted");
+        assertEq(abi.decode(out, (uint256)), 0);
+        assertEq(
+            safe.lastData(),
+            abi.encodeCall(ISafe.execTransactionFromModuleReturnData, (TO, 11, "", 0)),
+            "empty bytes argument"
+        );
+    }
+
+    /// Uniswap V2 `pair.swap(out0, out1, to, "")`, selector from a `Bytes32` constant.
+    function testEmptyBytesItemMatchesSolidity() public {
+        safe.setAnswer(abi.encode(true, bytes("")), false);
+        (bool ok,) = smoke.call(
+            abi.encodeWithSignature(
+                "pairSwapVia(address,address,uint256,uint256,address)",
+                address(safe),
+                address(venues),
+                uint256(1),
+                uint256(2),
+                TO
+            )
+        );
+        assertTrue(ok, "pairSwapVia reverted");
+        bytes memory payload = abi.encodeWithSelector(bytes4(0x022c0d9f), uint256(1), uint256(2), TO, "");
+        assertEq(
+            safe.lastData(),
+            abi.encodeCall(ISafe.execTransactionFromModuleReturnData, (address(venues), 0, payload, 0)),
+            "pair swap payload"
+        );
+    }
+
+    /// A selector from a `Uint256` constant.
+    function testConstantSelectorMatchesSolidity() public {
+        safe.setAnswer(abi.encode(true, bytes("")), false);
+        (bool ok,) = smoke.call(
+            abi.encodeWithSignature(
+                "transferViaConstant(address,address,address,uint256)", address(safe), TOKEN, TO, uint256(5)
+            )
+        );
+        assertTrue(ok);
+        bytes memory payload = abi.encodeWithSelector(bytes4(0xa9059cbb), TO, uint256(5));
+        assertEq(
+            safe.lastData(),
+            abi.encodeCall(ISafe.execTransactionFromModuleReturnData, (TOKEN, 0, payload, 0)),
+            "constant selector payload"
+        );
+    }
+
     function testVoidMethodCalldataMatchesSolidity() public {
         uint256[5] memory ns = _lengths();
         safe.setAnswer("", false);

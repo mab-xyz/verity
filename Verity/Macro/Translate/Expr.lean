@@ -1555,15 +1555,45 @@ def abiEncodeCallSyntax? (stx : Term) : Option (Term × Array Term) :=
   | `(term| abiEncodeCall $sel:term [ $[$items],* ]) => some (sel, items)
   | _ => none
 
-/-- The selector of `abiEncodeCall`: a numeric literal below `2^32`. -/
-def abiEncodeCallSelector (sel : Term) : CommandElabM Nat := do
+/-- `emptyBytes`, Solidity's `""` as a `Bytes` argument or `abiEncodeCall` item (unless a
+parameter of the calling function has that name). -/
+def isEmptyBytesTerm (params : Array ParamDecl) (stx : Term) : Bool :=
+  match stripParens stx with
+  | `(term| $id:ident) =>
+      id.getId.toString == "emptyBytes" && !params.any (fun p => p.name == "emptyBytes")
+  | _ => false
+
+/-- The selector of `abiEncodeCall`: a numeric literal below `2^32`, or a contract constant
+(`Uint256` or `Bytes32`) whose body is such a literal or a `bytes4` selector stored
+left-aligned (`Contracts.abiSelectorOfWord`). With no constant declarations in scope
+(early executable-rewrite passes), a constant name is accepted unresolved (`none`); the
+compilation-model translation, which has them, resolves it. -/
+def abiEncodeCallSelector? (constDecls : Array ConstantDecl) (sel : Term) :
+    CommandElabM (Option Nat) := do
+  let fromWord (value : Nat) : CommandElabM Nat := do
+    if value < 2 ^ 32 then pure value
+    else if value < 2 ^ 256 && value % 2 ^ 224 == 0 then pure (value / 2 ^ 224)
+    else throwErrorAt sel "abiEncodeCall selector exceeds 4 bytes (a Bytes32 selector must be left-aligned)"
   match stripParens sel with
   | `(term| $n:num) =>
-      let value := n.getNat
-      unless value < 2 ^ 32 do
+      unless n.getNat < 2 ^ 32 do
         throwErrorAt sel "abiEncodeCall selector exceeds 4 bytes"
-      pure value
-  | _ => throwErrorAt sel "abiEncodeCall selector must be a numeric literal (a 4-byte function selector)"
+      pure (some n.getNat)
+  | `(term| $id:ident) =>
+      let name := toString id.getId
+      match constDecls.find? (fun constant => declaredNameMatches name constant.name) with
+      | some constant =>
+          unless constant.ty == .uint256 || constant.ty == .bytes32 do
+            throwErrorAt sel s!"abiEncodeCall selector constant '{constant.name}' must be Uint256 or Bytes32"
+          match stripParens constant.body with
+          | `(term| $n:num) => some <$> fromWord n.getNat
+          | _ => throwErrorAt sel
+              s!"abiEncodeCall selector constant '{constant.name}' must be a numeric literal"
+      | none =>
+          if constDecls.isEmpty then pure none
+          else throwErrorAt sel s!"abiEncodeCall selector '{name}' is not a contract constant"
+  | _ => throwErrorAt sel
+      "abiEncodeCall selector must be a numeric literal or a contract constant (a 4-byte function selector)"
 
 /-- The index of `bytesWord data k`: a numeric literal (the word at byte offset `32 * k`). -/
 def bytesWordIndex (index : Term) : CommandElabM Nat := do
@@ -2897,8 +2927,8 @@ partial def flattenTypedInterfaceAppSyntaxEarly (stx : Term) : Term × Array Ter
   | _ => (stx, #[])
 
 /-- A `Bytes` argument of an ABI-frame typed-interface call: a `Bytes` parameter of the
-calling function, or `abiEncodeCall <selector> [items]` whose items are single-word values
-or `Bytes` parameters. -/
+calling function, `emptyBytes`, or `abiEncodeCall <selector> [items]` whose items are
+single-word values, `Bytes` parameters or `emptyBytes`. -/
 partial def validateTypedInterfaceBytesArg
     (fields : Array StorageFieldDecl)
     (constDecls : Array ConstantDecl)
@@ -2910,20 +2940,23 @@ partial def validateTypedInterfaceBytesArg
     (arg : Term) : CommandElabM Unit := do
   if let some (_, .bytes) := directParamNameWithType? params arg then
     return
+  if isEmptyBytesTerm params arg then
+    return
   match abiEncodeCallSyntax? arg with
   | some (sel, items) =>
-      let _ ← abiEncodeCallSelector sel
+      let _ ← abiEncodeCallSelector? constDecls sel
       for item in items do
         match directParamNameWithType? params item with
         | some (_, .bytes) => pure ()
         | _ =>
+            if isEmptyBytesTerm params item then continue
             let ty ← inferPureExprType fields constDecls immutableDecls externalDecls params locals item
             unless isSingleWordStaticValueType ty do
               throwErrorAt item
-                s!"abiEncodeCall items must be single-word values or Bytes parameters, got {renderValueType ty}"
+                s!"abiEncodeCall items must be single-word values, Bytes parameters or emptyBytes, got {renderValueType ty}"
   | none =>
       throwErrorAt arg
-        s!"typed interface call '{externalName}' takes a Bytes argument, which must be a Bytes parameter of this function or `abiEncodeCall <selector> [items]`"
+        s!"typed interface call '{externalName}' takes a Bytes argument, which must be a Bytes parameter of this function, `emptyBytes` or `abiEncodeCall <selector> [items]`"
 
 partial def resolveTypedInterfaceCallEarly?
     (fields : Array StorageFieldDecl)
@@ -5128,9 +5161,13 @@ def translateAbiFrameCallArgs
       | some (name, .bytes) =>
           shapes := shapes.push (← `(Compiler.Modules.Calls.AbiCallArgShape.bytesParam $(strTerm name)))
       | _ =>
+          if isEmptyBytesTerm params arg then
+            shapes := shapes.push (← `(Compiler.Modules.Calls.AbiCallArgShape.emptyBytes))
+            continue
           let some (sel, items) := abiEncodeCallSyntax? arg
-            | throwErrorAt arg "a Bytes argument of a typed interface call must be a Bytes parameter or `abiEncodeCall <selector> [items]`"
-          let selector ← abiEncodeCallSelector sel
+            | throwErrorAt arg "a Bytes argument of a typed interface call must be a Bytes parameter, `emptyBytes` or `abiEncodeCall <selector> [items]`"
+          let some selector ← abiEncodeCallSelector? constDecls sel
+            | throwErrorAt sel "abiEncodeCall selector must be a numeric literal or a contract constant"
           let mut itemShapes : Array Term := #[]
           for item in items do
             match directParamNameWithType? params item with
@@ -5138,6 +5175,9 @@ def translateAbiFrameCallArgs
                 itemShapes := itemShapes.push
                   (← `(Compiler.Modules.Calls.AbiCallItemShape.bytesParam $(strTerm name)))
             | _ =>
+                if isEmptyBytesTerm params item then
+                  itemShapes := itemShapes.push (← `(Compiler.Modules.Calls.AbiCallItemShape.emptyBytes))
+                  continue
                 let itemTy ← inferPureExprType fields constDecls immutableDecls externalDecls params locals item
                 words := words.push (← normalizeTranslatedExprForType itemTy item (← translateExpr item))
                 itemShapes := itemShapes.push (← `(Compiler.Modules.Calls.AbiCallItemShape.word))

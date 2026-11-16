@@ -135,10 +135,12 @@ A method taking `Bytes`, or returning `(Bool, Bytes)` (as Safe's
 Solidity's head/tail layout (a `Bytes` head is its tail offset; a tail is the
 length word, the data, and zero padding to 32 bytes). Its other parameters must
 be single words. A `Bytes` argument is a `Bytes` parameter of the calling
-function, forwarded unchanged, or a payload built in place,
-`abiEncodeCall <selector literal> [items]` (Solidity's
-`abi.encodeWithSelector(selector, items...)`), whose items are single-word
-values or `Bytes` parameters. `let (ok, ret) ← safe.exec…` binds the flag and a
+function, forwarded unchanged, `emptyBytes` (Solidity's `""`: a zero length
+word, no data), or a payload built in place, `abiEncodeCall <selector> [items]`
+(Solidity's `abi.encodeWithSelector(selector, items...)`), whose items are
+single-word values, `Bytes` parameters or `emptyBytes`. The selector is a
+numeric literal or a contract constant (`Uint256` holding it, or `Bytes32`
+holding it left-aligned) whose body is a numeric literal. `let (ok, ret) ← safe.exec…` binds the flag and a
 memory copy of the returned bytes, validated with solc's checks (at least two
 head words, a flag in `{0, 1}`, an offset and a length below `2^64` that fit in
 the returndata; otherwise `revert(0, 0)`); `ret` is read with `bytesLength ret`,
