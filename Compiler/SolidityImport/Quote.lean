@@ -200,6 +200,7 @@ partial def quoteStmt : Stmt → m Term
       `(Compiler.CompilationModel.Stmt.requireError $(← quoteExpr condition) $(quote name)
         $(← list (← args.mapM quoteExpr)))
   | .revertReturndata => `(Compiler.CompilationModel.Stmt.revertReturndata)
+  | .returnReturndata => `(Compiler.CompilationModel.Stmt.returnReturndata)
   | .stop => `(Compiler.CompilationModel.Stmt.stop)
   | .emit name args => do
       `(Compiler.CompilationModel.Stmt.emit $(quote name) $(← list (← args.mapM quoteExpr)))

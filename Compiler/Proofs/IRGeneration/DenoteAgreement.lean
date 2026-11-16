@@ -651,7 +651,7 @@ theorem execStmt_rawFree (fields : List Field) :
   | _, .returnValues _, _, h | _, .returnBytes _, _, h => by raw_free_arm
   | _, .returnArray .., _, _ | _, .returnStorageWords .., _, _
   | _, .returnCodeData .., _, _ | _, .revertEmpty, _, _ | _, .revertReturndata .., _, _
-  | _, .internalCall .., _, _ | _, .internalCallAssign .., _, _ | _, .rawLog .., _, _
+  | _, .returnReturndata, _, _ | _, .internalCall .., _, _ | _, .internalCallAssign .., _, _ | _, .rawLog .., _, _
   | _, .unsafeBlock .., _, _ | _, .unsafeYul .., _, _ | _, .matchAdt .., _, _ => by raw_free_arm
 
 theorem execStmtList_rawFree (fields : List Field) :
@@ -957,7 +957,7 @@ theorem execStmt_eq (fields : List Field) :
   | st, .returnBytes name, _, _ => execStmt_returnBytes_eq fields st name
   | _, .stop, _, _ | _, .returnArray .., _, _ | _, .returnStorageWords .., _, _
   | _, .returnCodeData .., _, _ | _, .revertEmpty, _, _ | _, .revertReturndata .., _, _
-  | _, .internalCall .., _, _ | _, .internalCallAssign .., _, _ | _, .rawLog .., _, _
+  | _, .returnReturndata, _, _ | _, .internalCall .., _, _ | _, .internalCallAssign .., _, _ | _, .rawLog .., _, _
   | _, .unsafeBlock .., _, _ | _, .unsafeYul .., _, _ | _, .matchAdt .., _, _ => rfl
 
 theorem execStmtList_eq (fields : List Field) :

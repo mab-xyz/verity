@@ -268,18 +268,27 @@ def supportsInternalHelperParamType (ty : ValueType) : Bool :=
   | .tuple _ => true
   | _ => !hasDynamicInternalHelperType ty
 
+/-- Does a function body mention `returnReturndata`? Such a body ends the whole call, so it
+has no internal-helper form (an EVM `return` inside a helper would skip the caller). -/
+partial def syntaxMentionsReturnReturndata (stx : Syntax) : Bool :=
+  match stx with
+  | .ident _ _ name _ => name == `returnReturndata
+  | .node _ _ args => args.any syntaxMentionsReturnReturndata
+  | _ => false
+
 def supportsInternalHelperSpec (fn : FunctionDecl) : Bool :=
   fn.name != "fallback" &&
     fn.name != "receive" &&
     fn.params.all (fun param => supportsInternalHelperParamType param.ty) &&
-    !hasDynamicInternalHelperType fn.returnTy
+    !hasDynamicInternalHelperType fn.returnTy &&
+    !syntaxMentionsReturnReturndata fn.body.raw
 
 def ensureSupportsInternalHelperSpec
     (stx : Syntax)
     (fn : FunctionDecl) : CommandElabM Unit := do
   unless supportsInternalHelperSpec fn do
     throwErrorAt stx
-      s!"helper call '{fn.name}' uses a parameter or return type that direct macro helper lowering does not support yet; only static non-fallback/non-receive helpers can be lowered to internal specs"
+      s!"helper call '{fn.name}' uses a parameter or return type that direct macro helper lowering does not support yet, or uses returnReturndata; only static non-fallback/non-receive helpers without returnReturndata can be lowered to internal specs"
 
 def ensureCallableAsInternalHelper
     (stx : Syntax)

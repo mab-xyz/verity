@@ -301,7 +301,7 @@ def stmtEffectSummary (helperEffects : String → MacroEffectSummary) :
       MacroEffectSummary.join
         { touchesMemory := true }
         (exprListEffectSummary helperEffects vs)
-  | .returnBytes _ | .returnArray _ =>
+  | .returnBytes _ | .returnArray _ | .returnReturndata =>
       { touchesMemory := true }
   | .returnCodeData ptr =>
       MacroEffectSummary.join

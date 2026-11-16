@@ -785,6 +785,7 @@ inductive LowLevelMechanic where
   | returndataSize
   | returndataCopy
   | revertReturndata
+  | returnReturndata
   | rawRevert
   | returndataOptionalBoolAt
   | blobbasefee
@@ -819,6 +820,7 @@ def toReportString : LowLevelMechanic → String
   | .returndataSize => "returndataSize"
   | .returndataCopy => "returndataCopy"
   | .revertReturndata => "revertReturndata"
+  | .returnReturndata => "returnReturndata"
   | .rawRevert => "rawRevert"
   | .returndataOptionalBoolAt => "returndataOptionalBoolAt"
   | .blobbasefee => "blobbasefee"
@@ -1344,6 +1346,9 @@ inductive Stmt
   | revertEmpty
   /-- Forward current returndata as revert payload (`returndatacopy` + `revert`). -/
   | revertReturndata
+  /-- Forward current returndata as success payload (`returndatacopy` + `return`):
+      ends the call frame like `return`, with the last call's returndata verbatim. -/
+  | returnReturndata
   | stop
   | ite (cond : Expr) (thenBranch : List Stmt) (elseBranch : List Stmt)  -- If/else (#179)
   | forEach (varName : String) (count : Expr) (body : List Stmt)  -- Bounded loop (#179)
@@ -1473,6 +1478,8 @@ def directMetadata : Stmt → StmtMetadata
       { termination := .alwaysTerminates, controlFlow := .reverts }
   | .revertReturndata =>
       { termination := .alwaysTerminates, controlFlow := .reverts, lowLevelMechanics := [.revertReturndata] }
+  | .returnReturndata =>
+      { termination := .alwaysTerminates, controlFlow := .returns, lowLevelMechanics := [.returnReturndata] }
   | .stop =>
       { termination := .alwaysTerminates, controlFlow := .stops }
   | .ite cond _ _ =>
@@ -1614,7 +1621,8 @@ def controlFlow : Stmt → ControlFlowSummary
       .mayReverting
   | .revertError _ _ | .panicCode _ | .panic _ | .revertEmpty | .revertReturndata =>
       .reverts
-  | .return _ | .returnValues _ | .returnArray _ | .returnBytes _ | .returnStorageWords _ | .returnCodeData _ =>
+  | .return _ | .returnValues _ | .returnArray _ | .returnBytes _ | .returnStorageWords _ | .returnCodeData _
+  | .returnReturndata =>
       .returns
   | .stop =>
       .stops
