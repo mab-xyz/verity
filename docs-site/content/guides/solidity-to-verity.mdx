@@ -37,6 +37,7 @@ Use this table as your first-pass conversion checklist.
 | `uint256 public x;` | `x : Uint256 := slot 0` inside `storage` |
 | `mapping(address => uint256) balances;` | `balances : Address -> Uint256 := slot 1` |
 | `mapping(bytes32 => Circuit) circuits;` | `circuits : MappingStruct(Uint256,[...]) := slot n` |
+| `mapping(bytes4 => uint256) bySelector;` | `bySelector : Bytes4 -> Uint256 := slot n` |
 | ERC-7201 storage root | `storage_namespace erc7201 "package.storage.Name"` before that root's fields |
 | nested storage struct | `state : StorageStruct [...] := slot n` |
 | `bytes calldata data` | `data : Bytes` |

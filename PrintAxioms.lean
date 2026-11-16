@@ -9171,6 +9171,8 @@ Contracts.allowance_run
 Contracts.totalSupply_run
 Contracts.StorageKey.toWord_address
 Contracts.StorageKey.toWord_uint256
+Contracts.StorageKey.toWord_bytesN
+Contracts.StorageKey.toWord_bytesN_injective
 Contracts.StorageWord.fromWord_uint256
 Contracts.StorageWord.toWord_uint256
 Contracts.MappingKeyWord.words_nil
@@ -12104,4 +12106,4 @@ run_cmd do
     for line in lines do
       liftIO <| IO.println line
 
--- Total: 11268 theorems/lemmas (8767 public, 2501 private, 0 sorry'd)
+-- Total: 11270 theorems/lemmas (8769 public, 2501 private, 0 sorry'd)
