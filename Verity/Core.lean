@@ -405,6 +405,10 @@ structure ContractState where
   blobBaseFee : Uint256 := 0
   baseFee : Uint256 := 0
   gasPrice : Uint256 := 0
+  /-- `block.coinbase` — the current block's beneficiary (the address that
+      receives priority fees and builder tips).  Lowers to the EVM
+      `coinbase()` opcode.  Defaults to `0` like the other block fields. -/
+  blockCoinbase : Address := 0
   calldataSize : Uint256 := 0
   calldata : List Nat := []                 -- Immutable calldata words used by ABI expression semantics
   /-- 4-byte function selector for live `calldataload 0` in registry mode.
@@ -714,6 +718,8 @@ def writeMap (s : ContractState) (slot : Nat) (key : Address) (value : Uint256) 
     (s.writeSlot slot value).baseFee = s.baseFee := rfl
 @[simp] theorem gasPrice_writeSlot (s : ContractState) (slot : Nat) (value : Uint256) :
     (s.writeSlot slot value).gasPrice = s.gasPrice := rfl
+@[simp] theorem blockCoinbase_writeSlot (s : ContractState) (slot : Nat) (value : Uint256) :
+    (s.writeSlot slot value).blockCoinbase = s.blockCoinbase := rfl
 @[simp] theorem calldataSize_writeSlot (s : ContractState) (slot : Nat) (value : Uint256) :
     (s.writeSlot slot value).calldataSize = s.calldataSize := rfl
 @[simp] theorem calldata_writeSlot (s : ContractState) (slot : Nat) (value : Uint256) :
@@ -971,6 +977,9 @@ def writeMap (s : ContractState) (slot : Nat) (key : Address) (value : Uint256) 
 @[simp] theorem gasPrice_writeAddrSlot (s : ContractState) (slot : Nat)
     (value : Address) :
     (s.writeAddrSlot slot value).gasPrice = s.gasPrice := rfl
+@[simp] theorem blockCoinbase_writeAddrSlot (s : ContractState) (slot : Nat)
+    (value : Address) :
+    (s.writeAddrSlot slot value).blockCoinbase = s.blockCoinbase := rfl
 
 @[simp] theorem calldataSize_writeAddrSlot (s : ContractState) (slot : Nat)
     (value : Address) :
@@ -1040,6 +1049,9 @@ def writeMap (s : ContractState) (slot : Nat) (key : Address) (value : Uint256) 
 @[simp] theorem gasPrice_writeMap (s : ContractState) (slot : Nat) (key : Address)
     (value : Uint256) :
     (s.writeMap slot key value).gasPrice = s.gasPrice := rfl
+@[simp] theorem blockCoinbase_writeMap (s : ContractState) (slot : Nat) (key : Address)
+    (value : Uint256) :
+    (s.writeMap slot key value).blockCoinbase = s.blockCoinbase := rfl
 @[simp] theorem calldataSize_writeMap (s : ContractState) (slot : Nat) (key : Address)
     (value : Uint256) :
     (s.writeMap slot key value).calldataSize = s.calldataSize := rfl
@@ -1110,6 +1122,9 @@ def writeMapUint (s : ContractState) (slot : Nat) (key : Uint256) (value : Uint2
     (s.writeMapUint slot key value).baseFee = s.baseFee := rfl
 @[simp] theorem gasPrice_writeMapUint (s : ContractState) (slot : Nat) (key value : Uint256) :
     (s.writeMapUint slot key value).gasPrice = s.gasPrice := rfl
+@[simp] theorem blockCoinbase_writeMapUint (s : ContractState) (slot : Nat)
+    (key value : Uint256) :
+    (s.writeMapUint slot key value).blockCoinbase = s.blockCoinbase := rfl
 @[simp] theorem events_writeMapUint (s : ContractState) (slot : Nat) (key value : Uint256) :
     (s.writeMapUint slot key value).events = s.events := rfl
 @[simp] theorem codeSize_writeMapUint (s : ContractState) (slot : Nat) (key value : Uint256) :
@@ -1515,6 +1530,8 @@ variable (s : ContractState) (slot : Nat) (keys : List Nat) (offset : Nat) (valu
     (s.writeMapChain slot keys offset value).baseFee = s.baseFee := rfl
 @[simp] theorem gasPrice_writeMapChain :
     (s.writeMapChain slot keys offset value).gasPrice = s.gasPrice := rfl
+@[simp] theorem blockCoinbase_writeMapChain :
+    (s.writeMapChain slot keys offset value).blockCoinbase = s.blockCoinbase := rfl
 @[simp] theorem knownAddresses_writeMapChain :
     (s.writeMapChain slot keys offset value).knownAddresses = s.knownAddresses := rfl
 @[simp] theorem events_writeMapChain :
@@ -1640,6 +1657,9 @@ theorem writeMapChain_enterHop_frame (s : ContractState) (caller callee : Addres
     (s.writeMap2 slot key1 key2 value).baseFee = s.baseFee := rfl
 @[simp] theorem gasPrice_writeMap2 (s : ContractState) (slot : Nat) (key1 key2 : Address) (value : Uint256) :
     (s.writeMap2 slot key1 key2 value).gasPrice = s.gasPrice := rfl
+@[simp] theorem blockCoinbase_writeMap2 (s : ContractState) (slot : Nat) (key1 key2 : Address)
+    (value : Uint256) :
+    (s.writeMap2 slot key1 key2 value).blockCoinbase = s.blockCoinbase := rfl
 @[simp] theorem events_writeMap2 (s : ContractState) (slot : Nat) (key1 key2 : Address) (value : Uint256) :
     (s.writeMap2 slot key1 key2 value).events = s.events := rfl
 @[simp] theorem codeSize_writeMap2 (s : ContractState) (slot : Nat) (key1 key2 : Address) (value : Uint256) :
@@ -2125,6 +2145,9 @@ they additionally synchronize the self account, which these views ignore. -/
 @[simp] theorem txOrigin_modifyTransientSlots (s : ContractState) (targets : List Nat)
     (f : Uint256 → Uint256) :
     (s.modifyTransientSlots targets f).txOrigin = s.txOrigin := rfl
+@[simp] theorem blockCoinbase_modifyTransientSlots (s : ContractState) (targets : List Nat)
+    (f : Uint256 → Uint256) :
+    (s.modifyTransientSlots targets f).blockCoinbase = s.blockCoinbase := rfl
 @[simp] theorem calldata_modifyTransientSlots (s : ContractState) (targets : List Nat)
     (f : Uint256 → Uint256) :
     (s.modifyTransientSlots targets f).calldata = s.calldata := rfl
@@ -2997,7 +3020,8 @@ def setMappingUintAddr (s : StorageSlot (Uint256 → Uint256)) (key : Uint256) (
     (s : ContractState) (n : Nat) (k : Address) (v : Uint256)
     (storageArray : Nat → List Uint256)
     (sender thisAddress txOrigin : Address)
-    (msgValue selfBalance blockTimestamp blockNumber chainId blobBaseFee baseFee gasPrice calldataSize : Uint256)
+    (msgValue selfBalance blockTimestamp blockNumber chainId blobBaseFee baseFee gasPrice : Uint256)
+    (blockCoinbase : Address) (calldataSize : Uint256)
     (calldata : List Nat) (selector : Nat) (memory : Nat → Uint256)
     (byteMemory : Compiler.CompilationModel.DenoteMemory.Memory)
     (knownAddresses : Nat → FiniteAddressSet) (events : List Event)
@@ -3006,7 +3030,7 @@ def setMappingUintAddr (s : StorageSlot (Uint256 → Uint256)) (key : Uint256) (
     (slot : StorageSlot Uint256) :
     (ContractState.mk (s.writeMap n k v).storageWords storageArray sender thisAddress txOrigin
       msgValue selfBalance blockTimestamp blockNumber chainId blobBaseFee baseFee gasPrice
-      calldataSize calldata selector memory byteMemory knownAddresses events calls
+      blockCoinbase calldataSize calldata selector memory byteMemory knownAddresses events calls
       codeSize accountWorld returndata).readUint slot = s.readUint slot :=
   ContractState.readUint_writeMap s n k v slot
 
@@ -3014,7 +3038,8 @@ def setMappingUintAddr (s : StorageSlot (Uint256 → Uint256)) (key : Uint256) (
     (s : ContractState) (n : Nat) (k : Address) (v : Uint256)
     (storageArray : Nat → List Uint256)
     (sender thisAddress txOrigin : Address)
-    (msgValue selfBalance blockTimestamp blockNumber chainId blobBaseFee baseFee gasPrice calldataSize : Uint256)
+    (msgValue selfBalance blockTimestamp blockNumber chainId blobBaseFee baseFee gasPrice : Uint256)
+    (blockCoinbase : Address) (calldataSize : Uint256)
     (calldata : List Nat) (selector : Nat) (memory : Nat → Uint256)
     (byteMemory : Compiler.CompilationModel.DenoteMemory.Memory)
     (knownAddresses : Nat → FiniteAddressSet) (events : List Event)
@@ -3023,7 +3048,7 @@ def setMappingUintAddr (s : StorageSlot (Uint256 → Uint256)) (key : Uint256) (
     (slot : StorageSlot Address) :
     (ContractState.mk (s.writeMap n k v).storageWords storageArray sender thisAddress txOrigin
       msgValue selfBalance blockTimestamp blockNumber chainId blobBaseFee baseFee gasPrice
-      calldataSize calldata selector memory byteMemory knownAddresses events calls
+      blockCoinbase calldataSize calldata selector memory byteMemory knownAddresses events calls
       codeSize accountWorld returndata).readAddr slot = s.readAddr slot :=
   ContractState.readAddr_writeMap s n k v slot
 
@@ -3031,7 +3056,8 @@ def setMappingUintAddr (s : StorageSlot (Uint256 → Uint256)) (key : Uint256) (
     (s : ContractState) (n : Nat) (k : Address) (v : Uint256)
     (storageArray : Nat → List Uint256)
     (sender thisAddress txOrigin : Address)
-    (msgValue selfBalance blockTimestamp blockNumber chainId blobBaseFee baseFee gasPrice calldataSize : Uint256)
+    (msgValue selfBalance blockTimestamp blockNumber chainId blobBaseFee baseFee gasPrice : Uint256)
+    (blockCoinbase : Address) (calldataSize : Uint256)
     (calldata : List Nat) (selector : Nat) (memory : Nat → Uint256)
     (byteMemory : Compiler.CompilationModel.DenoteMemory.Memory)
     (knownAddresses : Nat → FiniteAddressSet) (events : List Event)
@@ -3040,14 +3066,15 @@ def setMappingUintAddr (s : StorageSlot (Uint256 → Uint256)) (key : Uint256) (
     (slot : StorageSlot (Address → Uint256)) (k' : Address) :
     (ContractState.mk (s.writeMap n k v).storageWords storageArray sender thisAddress txOrigin
       msgValue selfBalance blockTimestamp blockNumber chainId blobBaseFee baseFee gasPrice
-      calldataSize calldata selector memory byteMemory knownAddresses events calls
+      blockCoinbase calldataSize calldata selector memory byteMemory knownAddresses events calls
       codeSize accountWorld returndata).readMap slot k' = (s.writeMap n k v).readMap slot k' := rfl
 
 @[simp] theorem ContractState.readMap2_mk_writeMap
     (s : ContractState) (n : Nat) (k : Address) (v : Uint256)
     (storageArray : Nat → List Uint256)
     (sender thisAddress txOrigin : Address)
-    (msgValue selfBalance blockTimestamp blockNumber chainId blobBaseFee baseFee gasPrice calldataSize : Uint256)
+    (msgValue selfBalance blockTimestamp blockNumber chainId blobBaseFee baseFee gasPrice : Uint256)
+    (blockCoinbase : Address) (calldataSize : Uint256)
     (calldata : List Nat) (selector : Nat) (memory : Nat → Uint256)
     (byteMemory : Compiler.CompilationModel.DenoteMemory.Memory)
     (knownAddresses : Nat → FiniteAddressSet) (events : List Event)
@@ -3056,7 +3083,7 @@ def setMappingUintAddr (s : StorageSlot (Uint256 → Uint256)) (key : Uint256) (
     (slot : StorageSlot (Address → Address → Uint256)) (k1 k2 : Address) :
     (ContractState.mk (s.writeMap n k v).storageWords storageArray sender thisAddress txOrigin
       msgValue selfBalance blockTimestamp blockNumber chainId blobBaseFee baseFee gasPrice
-      calldataSize calldata selector memory byteMemory knownAddresses events calls
+      blockCoinbase calldataSize calldata selector memory byteMemory knownAddresses events calls
       codeSize accountWorld returndata).readMap2 slot k1 k2 = s.readMap2 slot k1 k2 :=
   ContractState.readMap2_writeMap s n k v slot k1 k2
 
@@ -3391,6 +3418,10 @@ def baseFee : Contract Uint256 :=
 def gasPrice : Contract Uint256 :=
   fun state => ContractResult.success state.gasPrice state
 
+/-- `block.coinbase` — the current block's beneficiary address. -/
+def blockCoinbase : Contract Address :=
+  fun state => ContractResult.success state.blockCoinbase state
+
 def chainid : Contract Uint256 :=
   fun state => ContractResult.success state.chainId state
 
@@ -3423,6 +3454,9 @@ def chainid : Contract Uint256 :=
 
 @[simp] theorem gasPrice_run (state : ContractState) :
   gasPrice.run state = ContractResult.success state.gasPrice state := rfl
+
+@[simp] theorem blockCoinbase_run (state : ContractState) :
+  blockCoinbase.run state = ContractResult.success state.blockCoinbase state := rfl
 
 @[simp] theorem chainid_run (state : ContractState) :
   chainid.run state = ContractResult.success state.chainId state := rfl

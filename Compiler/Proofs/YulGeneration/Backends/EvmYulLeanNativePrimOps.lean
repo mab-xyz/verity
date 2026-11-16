@@ -1432,6 +1432,15 @@ theorem primCall_blobbasefee_any_ok
       .ok (state, [EvmYul.UInt256.ofNat state.toState.coinBase.val]) := by
   cases fuel <;> simp [EvmYul.Yul.primCall]
 
+theorem primCall_coinbase_any_ok
+    (fuel : Nat)
+    (state : EvmYul.Yul.State)
+    (values : List EvmYul.UInt256) :
+    EvmYul.Yul.primCall (fuel + 1) state
+        EvmYul.Operation.COINBASE values =
+      .ok (state, [EvmYul.UInt256.ofNat state.toState.coinBase.val]) := by
+  cases fuel <;> simp [EvmYul.Yul.primCall, step_coinbase_any]
+
 @[simp] theorem primCall_gaslimit_ok
     (fuel : Nat)
     (state : EvmYul.Yul.State) :

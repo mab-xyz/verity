@@ -50,7 +50,7 @@ inductive ContractResult (α : Type) where
   | revert  : String → ContractState → ContractResult α
 ```
 
-`ContractState` carries six persistent storage spaces (`storage`, `storageAddr`, `storageMap`, `storageMapUint`, `storageMap2`, `storageArray`), transient storage, EVM context (`sender`, `thisAddress`, `msgValue`, `blockTimestamp`, `blockNumber`, `chainId`, `blobBaseFee`, `selfBalance`), calldata, memory, `knownAddresses` for conservation proofs, and an append-only `events` log.
+`ContractState` carries six persistent storage spaces (`storage`, `storageAddr`, `storageMap`, `storageMapUint`, `storageMap2`, `storageArray`), transient storage, EVM context (`sender`, `thisAddress`, `msgValue`, `blockTimestamp`, `blockNumber`, `chainId`, `blobBaseFee`, `blockCoinbase`, `selfBalance`), calldata, memory, `knownAddresses` for conservation proofs, and an append-only `events` log.
 
 Every primitive is a `Contract α`. Read-only primitives never revert; write primitives return `success ()`; only `require` (and `requireSomeUint`, `revertError`) may emit `revert`. The custom `bind` short-circuits on revert.
 

@@ -97,9 +97,13 @@ def blockTimestamp  : Contract Uint256
 def blockNumber     : Contract Uint256
 def chainid         : Contract Uint256
 def blobbasefee     : Contract Uint256
+def baseFee         : Contract Uint256
+def gasPrice        : Contract Uint256
+def blockCoinbase   : Contract Address
 ```
 
-`txOrigin` lowers to the EVM `origin` opcode; like the other accessors it is
+`txOrigin` lowers to the EVM `origin` opcode and `blockCoinbase` (`block.coinbase`,
+the block's beneficiary) to `coinbase`; like the other accessors they are
 rejected in `pure` and compile-time-constant contexts.
 
 ```verity
@@ -107,6 +111,14 @@ function originIsSender () : Bool := do
   let o ← txOrigin
   let s ← msgSender
   return (o == s)
+```
+
+A builder tip is an ETH transfer to the coinbase:
+
+```verity
+function reentrancy_trusted payCoinbase (amount : Uint256) : Unit := do
+  let beneficiary ← blockCoinbase
+  ecmDo Compiler.Modules.Calls.callWithValueModule [addressToWord beneficiary, amount, 0, 0]
 ```
 
 `blockNumber`, `contractAddress`, `chainid`, and `selfBalance` are
