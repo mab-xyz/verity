@@ -329,6 +329,13 @@ def validateReturnShapesNode (fnName : String) (params : List Param)
         -- Full lifting of the static gate (dynamic payloads, broader return shapes)
         -- is tracked under the 1982 dynamic/composite ABI work.
         pure ()
+  | Stmt.returnReturndata =>
+      -- EVM `return` halts the whole call frame: inside an internal helper it would skip
+      -- the caller's remaining code and the nonreentrant lock release.
+      if isInternal then
+        throw s!"Compilation error: internal function '{fnName}' cannot use Stmt.returnReturndata; it ends the whole call, use it in an external function or fallback."
+      else
+        pure ()
   | _ => pure ()
 
 def validateReturnShapesInStmt (fnName : String) (params : List Param)
@@ -825,7 +832,7 @@ def stmtReadsStateOrEnvNode : Stmt → Bool
       exprReadsStateOrEnv offset || exprReadsStateOrEnv value
   | Stmt.calldatacopy _ _ _ | Stmt.returndataCopy _ _ _ => true
   | Stmt.revertEmpty => false
-  | Stmt.revertReturndata =>
+  | Stmt.revertReturndata | Stmt.returnReturndata =>
       true
   | Stmt.revertMemory offset size =>
       exprReadsStateOrEnv offset || exprReadsStateOrEnv size
@@ -1009,7 +1016,7 @@ def stmtReadsStateOrEnvWithFunctionEffectsNode
         exprReadsStateOrEnvWithFunctionEffects effects value
   | Stmt.calldatacopy _ _ _ | Stmt.returndataCopy _ _ _ => true
   | Stmt.revertEmpty => false
-  | Stmt.revertReturndata =>
+  | Stmt.revertReturndata | Stmt.returnReturndata =>
       true
   | Stmt.revertMemory offset size =>
       exprReadsStateOrEnvWithFunctionEffects effects offset ||
@@ -1337,7 +1344,7 @@ def validateNoUnsupportedAdtConstructNode : Stmt → Except String Unit
       if exprContainsAdtConstruct offset || exprContainsAdtConstruct size then
         throw "Compilation error: ADT construction cannot be used in revert offsets or sizes."
   | Stmt.storageArrayPop _ | Stmt.returnArray _ | Stmt.returnBytes _
-  | Stmt.returnStorageWords _ | Stmt.returnCodeData _ | Stmt.revertEmpty | Stmt.revertReturndata | Stmt.stop =>
+  | Stmt.returnStorageWords _ | Stmt.returnCodeData _ | Stmt.revertEmpty | Stmt.revertReturndata | Stmt.returnReturndata | Stmt.stop =>
       pure ()
   | Stmt.unsafeYul fragment =>
       if fragment.obligations.isEmpty then

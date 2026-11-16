@@ -648,6 +648,22 @@ def compileStmtWithFork (fields : List Field) (events : List EventDef := [])
           YulExpr.ident "__returndata_size"
         ])
       ]]
+  | Stmt.returnReturndata =>
+      if isInternal then
+        throw "Compilation error: Stmt.returnReturndata ends the whole call and is not supported in internal functions"
+      else
+        pure [YulStmt.block [
+          YulStmt.let_ "__returndata_size" (YulExpr.call "returndatasize" []),
+          YulStmt.exprStmt (YulExpr.call "returndatacopy" [
+            YulExpr.lit 0,
+            YulExpr.lit 0,
+            YulExpr.ident "__returndata_size"
+          ]),
+          YulStmt.exprStmt (YulExpr.call "return" [
+            YulExpr.lit 0,
+            YulExpr.ident "__returndata_size"
+          ])
+        ]]
   | Stmt.rawLog topics dataOffset dataSize => do
       if topics.length > 4 then
         throw s!"Compilation error: rawLog supports at most 4 topics (log0–log4), got {topics.length}"

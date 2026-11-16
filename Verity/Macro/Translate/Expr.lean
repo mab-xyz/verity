@@ -3182,9 +3182,10 @@ partial def localInternalArrayReturnBind?
   | some (fn, argTerms) =>
       unless fn.name != "fallback" &&
           fn.name != "receive" &&
-          fn.params.all (fun param => supportsInternalHelperParamType param.ty) do
+          fn.params.all (fun param => supportsInternalHelperParamType param.ty) &&
+          !syntaxMentionsReturnReturndata fn.body.raw do
         throwErrorAt rhs
-          s!"helper call '{fn.name}' uses a parameter or return type that direct macro helper lowering does not support yet; only static non-fallback/non-receive helpers can be lowered to internal specs"
+          s!"helper call '{fn.name}' uses a parameter or return type that direct macro helper lowering does not support yet, or uses returnReturndata; only static non-fallback/non-receive helpers without returnReturndata can be lowered to internal specs"
       match fn.returnTy with
       | .array elemTy =>
           if isSingleWordStaticValueType elemTy then

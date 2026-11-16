@@ -14,6 +14,7 @@ import Contracts.Counter.Counter
 import Contracts.LocalObligationMacroSmoke.LocalObligationMacroSmoke
 import Contracts.ProxyUpgradeabilityMacroSmoke
 import Contracts.Smoke
+import Contracts.Smoke.ReturndataForwardSmoke
 import Contracts.StringArrayErrorSmoke
 import Contracts.StringArrayEventSmoke
 import Verity.Core.Model.Denote
@@ -3390,6 +3391,28 @@ private def returnValueStopRejectedSpec : CompilationModel := {
   ]
 }
 
+/-- A returndata-forwarding entrypoint; `wrap` places the forwarding statement. -/
+private def returnReturndataSpec (wrap : Stmt → List Stmt)
+    (obligations : List LocalObligation := []) (isInternal : Bool := false)
+    (lock : Option String := none) : CompilationModel := {
+  name := "ReturnReturndataForward"
+  fields := [{ name := "lock", ty := FieldType.uint256, «slot» := some 0 }]
+  «constructor» := none
+  functions := [
+    { name := "forward"
+      params := []
+      returnType := none
+      isInternal := isInternal
+      localObligations := obligations
+      nonReentrantLock := lock
+      body := wrap Stmt.returnReturndata
+    }
+  ]
+}
+
+private def returndataForwardingObligation : LocalObligation :=
+  { name := "returndata_forwarding", obligation := "forwarded verbatim" }
+
 private def reservedEcmResultVarSpec : CompilationModel := {
   name := "ReservedEcmResultVar"
   fields := [{ name := "value", ty := FieldType.uint256 }]
@@ -5976,6 +5999,34 @@ set_option maxRecDepth 4096 in
     "function with return value rejects stop-only termination"
     returnValueStopRejectedSpec
     "not all control-flow paths end in return/revert"
+  let returnReturndataYul ← expectCompileToYul "returnReturndata compiles under local_obligations"
+    (returnReturndataSpec (fun s => [s]) [returndataForwardingObligation])
+  expectTrue "returnReturndata copies the whole returndata buffer to memory 0"
+    (contains returnReturndataYul "let __returndata_size := returndatasize()" &&
+      contains returnReturndataYul "returndatacopy(0, 0, __returndata_size)")
+  expectTrue "returnReturndata returns the whole returndata buffer"
+    (contains returnReturndataYul "return(0, __returndata_size)")
+  discard <| expectCompile "returnReturndata compiles inside an unsafe block"
+    (returnReturndataSpec (fun s => [Stmt.unsafeBlock "forward returndata" [s]]))
+  expectCompileErrorContains "returnReturndata needs unsafe or local_obligations"
+    (returnReturndataSpec (fun s => [s]))
+    "uses low-level/assembly mechanic(s) returnReturndata outside an unsafe block"
+  expectCompileErrorContains "returnReturndata is rejected in internal functions"
+    (returnReturndataSpec (fun s => [s]) [returndataForwardingObligation] (isInternal := true))
+    "cannot use Stmt.returnReturndata"
+  let lockedReturnReturndataYul ← expectCompileToYul "nonreentrant returnReturndata compiles"
+    (returnReturndataSpec (fun s => [s]) [returndataForwardingObligation] (lock := some "lock"))
+  expectTrue "nonreentrant returnReturndata releases the lock before returning"
+    -- the last `tstore` before the `return` clears the lock slot (0)
+    (((lockedReturnReturndataYul.splitOn "return(0, __returndata_size)").headD ""
+        |>.splitOn "tstore(").getLastD "" |>.startsWith "0, 0)")
+  expectTrue "returnReturndata is a returning low-level mechanic"
+    (Stmt.returnReturndata.directMetadata.lowLevelMechanics.map
+        LowLevelMechanic.toReportString == ["returnReturndata"] &&
+      (Stmt.controlFlow Stmt.returnReturndata).mayReturn &&
+      !(Stmt.controlFlow Stmt.returnReturndata).mayFallThrough)
+  discard <| expectCompile "macro returndata-forwarding smoke compiles"
+    Contracts.Smoke.ReturndataForwardSmoke.spec
   let envRuntimeYul ← expectCompileToYul "env runtime smoke compiles" envRuntimeSmokeSpec
   expectTrue "env runtime smoke lowers block.number" (contains envRuntimeYul "number()")
   let stringCompiled :=

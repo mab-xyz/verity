@@ -37,7 +37,8 @@ def bitInternalCall : SurfaceMask := (1 : UInt32) <<< 3
 /-- Bit 4: Linked foreign calls, external call binds, and External Call Modules (`Stmt.ecm`). -/
 def bitExternalCall : SurfaceMask := (1 : UInt32) <<< 4
 
-/-- Bit 5: Low-level EVM call/code/memory mechanics (`call`, `staticcall`, `delegatecall`, `returnCodeData`). -/
+/-- Bit 5: Low-level EVM call/code/memory mechanics (`call`, `staticcall`, `delegatecall`,
+`returnCodeData`, `returnReturndata`). -/
 def bitLowLevelMem : SurfaceMask := (1 : UInt32) <<< 5
 
 /-- Bit 6: Contract event emission (`Stmt.emit`). -/
@@ -198,6 +199,8 @@ def stmtSurfaceMask : Stmt → SurfaceMask
       bitExternalCall ||| exprListSurfaceMask args
   | .returnCodeData ptr =>
       bitLowLevelMem ||| exprSurfaceMask ptr
+  | .returnReturndata =>
+      bitLowLevelMem
   | .rawLog topics dOff dSz =>
       bitCoreGap ||| exprListSurfaceMask topics ||| exprSurfaceMask dOff ||| exprSurfaceMask dSz
   | .requireError cond _ args =>

@@ -384,7 +384,7 @@ def validateInternalCallShapesNodeStmt
   | Stmt.revertMemory offset size => do
       validateInternalCallShapesInExpr functions callerName callerParams offset
       validateInternalCallShapesInExpr functions callerName callerParams size
-  | Stmt.revertEmpty | Stmt.revertReturndata =>
+  | Stmt.revertEmpty | Stmt.revertReturndata | Stmt.returnReturndata =>
       pure ()
   | Stmt.setMapping _ key value | Stmt.setMappingWord _ key _ value | Stmt.setMappingPackedWord _ key _ _ value | Stmt.setMappingUint _ key value
   | Stmt.setStructMember _ key _ value => do
@@ -538,7 +538,7 @@ def validateExternalCallTargetsNodeStmt
   | Stmt.revertMemory offset size => do
       validateExternalCallTargetsInExpr externals context offset
       validateExternalCallTargetsInExpr externals context size
-  | Stmt.revertEmpty | Stmt.revertReturndata =>
+  | Stmt.revertEmpty | Stmt.revertReturndata | Stmt.returnReturndata =>
       pure ()
   | Stmt.setMapping _ key value | Stmt.setMappingWord _ key _ value | Stmt.setMappingPackedWord _ key _ _ value | Stmt.setMappingUint _ key value
   | Stmt.setStructMember _ key _ value => do

@@ -273,7 +273,8 @@ private def collectAxiomatizedPrimitivesFromStmts (stmts : List Stmt) : List Str
 private def isUnsafeBoundaryMechanic (mechanic : String) : Bool :=
   match mechanic with
   | "call" | "staticcall" | "delegatecall"
-  | "returndataSize" | "returndataCopy" | "revertReturndata" | "returndataOptionalBoolAt"
+  | "returndataSize" | "returndataCopy" | "revertReturndata" | "returnReturndata"
+  | "returndataOptionalBoolAt"
   | "mload" | "mstore" | "calldataload" | "calldatacopy" | "codecopy"
   | "extcodesize" | "extcodecopy" | "create2" | "tload" | "tstore" => true
   | _ => false
@@ -321,6 +322,8 @@ private def collectUnguardedLowLevelStmtMechanics : Stmt → List String
       collectLowLevelExprMechanics offset ++ collectLowLevelExprMechanics size
   | .revertReturndata =>
       ["revertReturndata"]
+  | .returnReturndata =>
+      ["returnReturndata"]
   | .setMapping _ key value
   | .setMappingWord _ key _ value
   | .setMappingPackedWord _ key _ _ value
@@ -506,7 +509,8 @@ private def isDeniedLowLevelMechanic (mechanic : String) : Bool :=
   match mechanic with
   | "call" | "staticcall" | "delegatecall" | "create2" | "codecopy" | "extcodecopy"
   | "returndataSize" | "returndataCopy"
-  | "revertReturndata" | "rawRevert" | "returndataOptionalBoolAt" | "blobbasefee" => true
+  | "revertReturndata" | "returnReturndata" | "rawRevert" | "returndataOptionalBoolAt"
+  | "blobbasefee" => true
   | _ => false
 
 private def collectDeniedLowLevelMechanicsFromMechanics (mechanics : List String) : List String :=
