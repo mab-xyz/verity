@@ -898,7 +898,7 @@ theorem execStmt_eq (fields : List Field) :
   | st, .revertMemory offset size, _ => execStmt_revertMemory_eq fields st offset size
   | st, .revertReturndata, _ => execStmt_revertReturndata_eq fields st
   | _, .stop, _ | _, .returnArray .., _ | _, .returnStorageWords .., _
-  | _, .returnCodeData .., _ | _, .revertEmpty, _
+  | _, .returnCodeData .., _ | _, .revertEmpty, _ | _, .returnReturndata, _
   | _, .internalCall .., _ | _, .internalCallAssign .., _ | _, .rawLog .., _
   | _, .unsafeBlock .., _ | _, .unsafeYul .., _ | _, .matchAdt .., _ => rfl
 

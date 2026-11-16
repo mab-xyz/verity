@@ -998,7 +998,7 @@ def stmtTouchesUnsupportedConstructorRawCalldataSurface : Stmt → Bool
         exprTouchesUnsupportedConstructorRawCalldataSurface size
   | .stop | .storageArrayPop _
   | .returnValues _ | .returnArray _ | .returnBytes _ | .returnStorageWords _
-  | .revertEmpty | .revertReturndata
+  | .revertEmpty | .revertReturndata | .returnReturndata
   | .rawLog _ _ _ | .ecm _ _ => false
   | .unsafeBlock _ _ | .unsafeYul _ | .matchAdt _ _ _ => true
 
@@ -1587,7 +1587,8 @@ def stmtTouchesUnsupportedEffectSurface : Stmt → Bool
   | .panicCode _ => true
   | .panic _ => true
   | .requireError _ _ _ | .revertError _ _ | .returnValues _ | .returnArray _
-  | .returnBytes _ | .returnStorageWords _ | .returnCodeData _ | .emit _ _ | .rawLog _ _ _
+  | .returnBytes _ | .returnStorageWords _ | .returnCodeData _ | .returnReturndata
+  | .emit _ _ | .rawLog _ _ _
   | .externalCallBind _ _ _ | .tryExternalCallBind _ _ _ _ => true
   | .ecm mod _ => !(ecmPureHashing mod)
   | .setImmutable _ _ => true
@@ -1664,7 +1665,7 @@ def stmtTouchesUnsupportedCoreSurface : Stmt → Bool
   | .storageArrayPop _
   | .requireError _ _ _ | .revertError _ _ | .returnValues _ | .returnArray _
   | .returnBytes _ | .returnStorageWords _ | .returnCodeData _
-  | .revertEmpty | .revertReturndata => false
+  | .revertEmpty | .revertReturndata | .returnReturndata => false
   | .emit _ _ | .internalCall _ _ | .internalCallAssign _ _ _
   | .rawLog _ _ _ | .externalCallBind _ _ _ | .tryExternalCallBind _ _ _ _ | .ecm _ _ => false
   | .unsafeBlock _ _ | .unsafeYul _ | .matchAdt _ _ _ => true
@@ -1699,7 +1700,7 @@ def stmtTouchesUnsupportedStateSurface : Stmt → Bool
   | .stop
   | .requireError _ _ _ | .revertError _ _ | .returnValues _ | .returnArray _
   | .returnBytes _ | .returnStorageWords _ | .returnCodeData _
-  | .revertEmpty | .revertReturndata => false
+  | .revertEmpty | .revertReturndata | .returnReturndata => false
   | .internalCall _ args =>
       exprListTouchesUnsupportedStateSurface args
   | .internalCallAssign _ _ args =>
@@ -1757,7 +1758,7 @@ def stmtTouchesUnsupportedCallSurface : Stmt → Bool
         exprTouchesUnsupportedCallSurface value
   | .require cond _ | .return cond =>
       exprTouchesUnsupportedCallSurface cond
-  | .returnCodeData _ => true
+  | .returnCodeData _ | .returnReturndata => true
   | .internalCall _ _ | .internalCallAssign _ _ _ => true
   | .calldatacopy destOffset sourceOffset size
   | .returndataCopy destOffset sourceOffset size =>
@@ -1831,7 +1832,7 @@ def stmtTouchesUnsupportedHelperSurface : Stmt → Bool
   | .ecm _ args =>
       exprListTouchesUnsupportedHelperSurface args
   | .stop
-  | .revertEmpty | .revertReturndata
+  | .revertEmpty | .revertReturndata | .returnReturndata
   | .storageArrayPop _
   | .returnValues _ | .returnArray _
   | .returnBytes _ | .returnStorageWords _ | .rawLog _ _ _ => false
@@ -1892,7 +1893,7 @@ def stmtTouchesInternalHelperSurface : Stmt → Bool
       exprTouchesInternalHelperSurface offset ||
         exprTouchesInternalHelperSurface size
   | .stop
-  | .revertEmpty | .revertReturndata | .externalCallBind _ _ _ | .tryExternalCallBind _ _ _ _
+  | .revertEmpty | .revertReturndata | .returnReturndata | .externalCallBind _ _ _ | .tryExternalCallBind _ _ _ _
   | .ecm _ _ | .storageArrayPop _ | .returnValues _ | .returnArray _
   | .returnBytes _ | .returnStorageWords _ | .emit _ _
   | .rawLog _ _ _ => false
@@ -1980,7 +1981,7 @@ def stmtTouchesExprInternalHelperSurface : Stmt → Bool
       exprTouchesInternalHelperSurface offset ||
         exprTouchesInternalHelperSurface size
   | .internalCall _ _ | .internalCallAssign _ _ _ | .stop
-  | .revertEmpty | .revertReturndata | .externalCallBind _ _ _ | .tryExternalCallBind _ _ _ _ | .ecm _ _
+  | .revertEmpty | .revertReturndata | .returnReturndata | .externalCallBind _ _ _ | .tryExternalCallBind _ _ _ _ | .ecm _ _
   | .storageArrayPop _ | .returnValues _ | .returnArray _
   | .returnBytes _ | .returnStorageWords _ | .emit _ _
   | .rawLog _ _ _ => false
@@ -2008,7 +2009,7 @@ def stmtTouchesStructuralInternalHelperSurface : Stmt → Bool
   | .stop | .setStorageAddr _ _ | .setImmutable _ _ | .setStorageWord _ _ _ | .mstore _ _ | .tstore _ _
  
   | .calldatacopy _ _ _ | .returndataCopy _ _ _ | .revertMemory _ _
-  | .revertEmpty | .revertReturndata | .externalCallBind _ _ _ | .tryExternalCallBind _ _ _ _ | .ecm _ _
+  | .revertEmpty | .revertReturndata | .returnReturndata | .externalCallBind _ _ _ | .tryExternalCallBind _ _ _ _ | .ecm _ _
   | .setMapping _ _ _ | .setMappingWord _ _ _ _
   | .setMappingPackedWord _ _ _ _ _ | .setMapping2 _ _ _ _
   | .setMapping2Word _ _ _ _ _ | .setMappingUint _ _ _
@@ -2061,7 +2062,7 @@ def stmtTouchesUnsupportedForeignSurface : Stmt → Bool
         exprTouchesUnsupportedForeignSurface size
   | .stop
   | .internalCall _ _ | .internalCallAssign _ _ _
-  | .revertEmpty | .revertReturndata
+  | .revertEmpty | .revertReturndata | .returnReturndata
   | .storageArrayPop _
   | .returnValues _ | .returnArray _
   | .returnBytes _ | .returnStorageWords _ | .rawLog _ _ _ => false
@@ -2107,7 +2108,7 @@ def stmtTouchesUnsupportedLowLevelSurface : Stmt → Bool
         exprTouchesUnsupportedLowLevelSurface value
   | .require cond _ | .return cond =>
       exprTouchesUnsupportedLowLevelSurface cond
-  | .returnCodeData _ => true
+  | .returnCodeData _ | .returnReturndata => true
   | .calldatacopy destOffset sourceOffset size
   | .returndataCopy destOffset sourceOffset size =>
       exprTouchesUnsupportedLowLevelSurface destOffset ||
@@ -2152,7 +2153,7 @@ def stmtTouchesUnsupportedContractSurface (stmt : Stmt) : Bool :=
       exprTouchesUnsupportedContractSurface value
   | .require cond _ | .return cond =>
       exprTouchesUnsupportedContractSurface cond
-  | .returnCodeData _ => true
+  | .returnCodeData _ | .returnReturndata => true
   | .mstore offset value | .tstore offset value =>
       exprTouchesUnsupportedContractSurface offset ||
         exprTouchesUnsupportedContractSurface value
@@ -2671,7 +2672,7 @@ mutual
         exprListInternalHelperCallNames topics ++ exprInternalHelperCallNames dataOffset ++
           exprInternalHelperCallNames dataSize
     | .storageArrayPop _ | .returnArray _ | .returnBytes _ | .returnStorageWords _
-    | .revertEmpty | .revertReturndata | .stop =>
+    | .revertEmpty | .revertReturndata | .returnReturndata | .stop =>
         []
     | .unsafeBlock _ body => stmtListExprHelperCallNames body
     | .unsafeYul _ => []
@@ -2748,7 +2749,7 @@ mutual
         exprListInternalHelperCallNames topics ++ exprInternalHelperCallNames dataOffset ++
           exprInternalHelperCallNames dataSize
     | .storageArrayPop _ | .returnArray _ | .returnBytes _ | .returnStorageWords _
-    | .revertEmpty | .revertReturndata | .stop =>
+    | .revertEmpty | .revertReturndata | .returnReturndata | .stop =>
         []
     | .unsafeBlock _ body => stmtListInternalHelperCallNames body
     | .unsafeYul _ => []

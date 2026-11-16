@@ -99,6 +99,7 @@ theorem stmtByteFree_of_contractSurfaceClosed :
   | .externalCallBind .., _ | .tryExternalCallBind .., _ | .returnValues .., _
   | .returnBytes .., _ | .returnArray .., _ | .returnStorageWords .., _
   | .returnCodeData .., _ | .revertEmpty, _ | .revertReturndata, _ | .revertMemory .., _
+  | .returnReturndata, _
   | .internalCall .., _ | .internalCallAssign .., _ | .rawLog .., _ | .unsafeYul .., _ => rfl
 
 theorem stmtListByteFree_of_contractSurfaceClosed :

@@ -36,6 +36,59 @@ Raw memory reverts should use `UnsafeYulFragment.rawRevert`. Typed primitives su
 first-class only when Verity commits to their semantics and they are useful in
 proofs or audits.
 
+## Returndata Forwarding
+
+A proxy fallback (EIP-1967, EIP-2535) ends with the callee's returndata,
+verbatim, as its own revert or success payload. Two first-class statements
+cover both exits:
+
+| `verity_contract` | `Stmt` | Yul |
+|---|---|---|
+| `revertReturndata` | `Stmt.revertReturndata` | `returndatacopy(0, 0, returndatasize())`, `revert(0, returndatasize())` |
+| `returnReturndata` | `Stmt.returnReturndata` | `returndatacopy(0, 0, returndatasize())`, `return(0, returndatasize())` |
+
+```lean
+function reentrancy_trusted forward (callee : Address, flag : Uint256, length : Uint256)
+  local_obligations [returndata_forwarding := assumed "..."]
+  : Unit := do
+  mstore 0 flag
+  mstore 32 length
+  let ok := call ALL_GAS (addressToWord callee) 0 0 64 0 0
+  if ok == 0 then
+    revertReturndata
+  else
+    returnReturndata
+```
+
+(`Contracts/Smoke/ReturndataForwardSmoke.lean`; `test/ReturndataForwardSmoke.t.sol`
+checks the forwarded bytes on the compiled bytecode.)
+
+Both are low-level mechanics: outside an `unsafe` block the function needs a
+`local_obligations` entry, trust reports list them, and
+`--deny-low-level-mechanics` rejects them. A `nonreentrant` lock is released
+before the `return` of `returnReturndata`, as before any other successful exit.
+
+`returnReturndata` ends the whole call, so `verity_contract` accepts it only in
+tail position of a `Unit` function body: the last statement of its path,
+directly or under `if`/`else`, with nothing after the enclosing statements up to
+the end of the function. It is rejected anywhere else (after another
+statement, inside a loop, in a constructor or modifier), in non-`Unit`
+functions, and in internal functions; a function that uses it gets no
+internal-helper form, so calling it from another function is rejected.
+Modifiers are precondition-only (`docs/MODIFIERS_AND_INHERITANCE.md`): their
+statements are inserted before the body and none run after it, so a function
+`with` a modifier keeps the tail guarantee; a `returnReturndata` inside a
+modifier is rejected.
+
+In the executable EDSL both statements are no-ops (`Contracts.revertReturndata`,
+`Contracts.returnReturndata`): the `Contract` monad has no frame-ending success
+with a payload. Because `returnReturndata` is in tail position, nothing runs
+after it in the EDSL either, so the executable post-state equals the
+bytecode's on every path; only the returned bytes are not modeled (as the
+revert payload of `revertReturndata` is not). The proof interpreters prove
+`revertReturndata` and do not model `returnReturndata`; see
+`docs/INTERPRETER_FEATURE_MATRIX.md`.
+
 ## Yul Temporary Slot Reuse and Scratch-Memory Spilling (`--max-stack-locals`)
 
 The spill pass is a **trusted, tested-only** component (see
