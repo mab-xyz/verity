@@ -2371,12 +2371,13 @@ partial def inferPureExprType
         requireWordLikeType arg "low-level staticcall" (← inferPureExprType fields constDecls immutableDecls externalDecls params locals arg visitingConstants)
       pure .uint256
   | `(term| bytesLength $name:term) =>
-      match directParamNameWithType? params name with
-      | some (_, .bytes) => pure .uint256
-      | _ =>
+      match directParamNameWithType? params name, paramDynamicMemberProjection? params name with
+      | some (_, .bytes), _ => pure .uint256
+      | _, some (_, .bytes, _) => pure .uint256
+      | _, _ =>
           if (memoryBytesLocal? locals name).isSome then pure .uint256
           else throwErrorAt name
-            "bytesLength expects a Bytes parameter or the Bytes of a (Bool, Bytes) typed-interface return"
+            "bytesLength expects a Bytes parameter, a Bytes member of a struct parameter, or the Bytes of a (Bool, Bytes) typed-interface return"
   | `(term| bytesWord $name:term $index:term) =>
       unless (memoryBytesLocal? locals name).isSome do
         throwErrorAt name "bytesWord expects the Bytes of a (Bool, Bytes) typed-interface return"
@@ -3997,14 +3998,16 @@ partial def translatePureExprWithTypes
           $(← translatePureExprWithTypes fields constDecls immutableDecls params locals outOffset visitingConstants linkedExternalLowerer?)
           $(← translatePureExprWithTypes fields constDecls immutableDecls params locals outSize visitingConstants linkedExternalLowerer?))
   | `(term| bytesLength $name:term) =>
-      match directParamNameWithType? params name with
-      | some (paramName, .bytes) =>
+      match directParamNameWithType? params name, paramDynamicMemberProjection? params name with
+      | some (paramName, .bytes), _ =>
           `(Compiler.CompilationModel.Expr.param $(strTerm s!"{paramName}_length"))
-      | _ =>
+      | _, some (paramName, .bytes, wordOffset) =>
+          `(Compiler.CompilationModel.Expr.paramDynamicMemberLength $(strTerm paramName) $(natTerm wordOffset))
+      | _, _ =>
           match memoryBytesLocal? locals name with
           | some localName => memoryBytesLengthExpr localName
           | none => throwErrorAt name
-              "bytesLength expects a Bytes parameter or the Bytes of a (Bool, Bytes) typed-interface return"
+              "bytesLength expects a Bytes parameter, a Bytes member of a struct parameter, or the Bytes of a (Bool, Bytes) typed-interface return"
   | `(term| bytesWord $name:term $index:term) =>
       -- Word `k + 1` of the word array bound by `abiCallModule` (length word, then the
       -- zero-padded data); `0` from byte offset `bytesLength` on, like `Contracts.bytesWord`.
