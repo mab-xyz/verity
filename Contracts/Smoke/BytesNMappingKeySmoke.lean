@@ -9,6 +9,13 @@ hashes a `bytesN` key left-aligned in the 32-byte word
 parameter as that word, and the executable plane keys the entry by the same
 word (`StorageKey.toWord`). `test/BytesNMappingKeySmoke.t.sol` checks the
 compiled slots against Solidity's.
+
+Keys reach the mapping from every source the macro accepts for a `BytesN`
+value: a parameter, a local bound to it, a `Bytes4` constant, an internal
+helper's result and `narrowBytes 4 word`. In the compiled code each is the
+left-aligned word (a `BytesN` constant is left-aligned at lowering, like a
+literal `return`). A bare numeric literal key has no key type in the
+executable plane and is rejected.
 -/
 
 namespace Contracts.Smoke
@@ -25,6 +32,9 @@ verity_contract BytesNMappingKeySmoke where
       position @word 1
     ]) := slot 4
     nested : Bytes4 → Address → Uint256 := slot 5
+
+  constants
+    selector : Bytes4 := 0x12345678
 
   function setValue (key : Bytes4, value : Uint256) : Unit := do
     setMappingN valueOf [key] value
@@ -47,6 +57,27 @@ verity_contract BytesNMappingKeySmoke where
   function getNested (key : Bytes4, owner : Address) : Uint256 := do
     let value ← getMappingN nested [key, owner]
     return value
+
+  function setValueAtSelector (value : Uint256) : Unit := do
+    setMappingN valueOf [selector] value
+
+  function setEntryAtSelector (target : Uint256) : Unit := do
+    setStructMember "entries" selector "target" target
+
+  function setValueViaLocal (key : Bytes4, value : Uint256) : Unit := do
+    let copied := key
+    setMappingN valueOf [copied] value
+
+  function pure selectorOf () : Bytes4 := do
+    return 0x12345678
+
+  -- The CEI check counts an internal helper call as an interaction.
+  function allow_post_interaction_writes setValueViaHelper (value : Uint256) : Unit := do
+    let key ← selectorOf
+    setMappingN valueOf [key] value
+
+  function setValueNarrowed (word : Uint256, value : Uint256) : Unit := do
+    setMappingN valueOf [narrowBytes 4 word] value
 
 /-! ## Slot layout agrees with Solidity (interpretation only) -/
 
@@ -119,5 +150,50 @@ private def bytesNRun : ContractResult (Uint256 × Uint256 × Uint256 × Uint256
 example : bytesNRun.getValue? =
     some ((1000 : Uint256), (0 : Uint256), (10 : Uint256), (42 : Uint256), (0 : Uint256)) := by
   decide +kernel
+
+/-- Every key source lands on the entry of the parameter key `0x12345678`. -/
+private def keySourcesRun : ContractResult (List Uint256) :=
+  (do
+    BytesNMappingKeySmoke.setValueAtSelector 1
+    let a ← BytesNMappingKeySmoke.getValue keyA
+    BytesNMappingKeySmoke.setValueViaLocal keyA 2
+    let b ← BytesNMappingKeySmoke.getValue keyA
+    BytesNMappingKeySmoke.setValueViaHelper 3
+    let c ← BytesNMappingKeySmoke.getValue keyA
+    BytesNMappingKeySmoke.setValueNarrowed
+      (Verity.Core.Uint256.ofNat (0x12345678 * 2 ^ 224 + 0xdead)) 4
+    let d ← BytesNMappingKeySmoke.getValue keyA
+    BytesNMappingKeySmoke.setEntryAtSelector 5
+    let (t, _) ← BytesNMappingKeySmoke.getEntry keyA
+    return [a, b, c, d, t] : Contract _).run Verity.defaultState
+
+example : keySourcesRun.getValue? = some [1, 2, 3, 4, 5] := by
+  decide +kernel
+
+/-! ## Rejected: bare numeric literal keys -/
+
+/--
+error: numeric literal mapping keys are not supported; declare a typed constant (e.g. `selector : Bytes4 := 0x12345678`) or pass a typed parameter
+-/
+#guard_msgs in
+verity_contract BytesNLiteralKeyListRejected where
+  storage
+    valueOf : Bytes4 → Uint256 := slot 3
+
+  function setLiteral (value : Uint256) : Unit := do
+    setMappingN valueOf [0x12345678] value
+
+/--
+error: numeric literal mapping keys are not supported; declare a typed constant (e.g. `selector : Bytes4 := 0x12345678`) or pass a typed parameter
+-/
+#guard_msgs in
+verity_contract BytesNLiteralStructKeyRejected where
+  storage
+    entries : MappingStruct(Bytes4,[
+      target @word 0
+    ]) := slot 4
+
+  function setLiteral (target : Uint256) : Unit := do
+    setStructMember "entries" 0x12345678 "target" target
 
 end Contracts.Smoke
