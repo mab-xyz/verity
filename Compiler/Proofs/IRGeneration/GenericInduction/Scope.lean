@@ -245,7 +245,7 @@ theorem exprCompileCore_of_exprTouchesUnsupportedContractSurface_eq_false
     FunctionBody.ExprCompileCore expr := by
   match expr, hsurface with
   | .literal _, _ | .param _, _ | .constructorArg _, _ | .localVar _, _ | .caller, _
-  | .contractAddress, _ | .txOrigin, _ | .msgValue, _ | .blockTimestamp, _
+  | .contractAddress, _ | .txOrigin, _ | .blockCoinbase, _ | .msgValue, _ | .blockTimestamp, _
   | .blockNumber, _ | .chainid, _ | .blobbasefee, _ | .calldatasize, _
   | .returndataSize, _ => constructor
   | .immutable _, h | .forkIfAtLeast _ _ _, h | .mulDiv512Down _ _ _, h
@@ -831,8 +831,9 @@ private theorem exprBoundNamesInScope_of_validateScopedExprIdentifiers_core {exp
     (hconstructorArgsInScope : ConstructorArgsInScope constructorArgCount scope) :
     FunctionBody.exprBoundNamesInScope expr scope := by
   induction hcore with
-  | literal | caller | contractAddress | txOrigin | msgValue | blockTimestamp | blockNumber
-  | chainid | blobbasefee | calldatasize | returndataSize => exact exprBoundNamesInScope_of_nil
+  | literal | caller | contractAddress | txOrigin | blockCoinbase | msgValue | blockTimestamp
+  | blockNumber | chainid | blobbasefee | calldatasize | returndataSize =>
+      exact exprBoundNamesInScope_of_nil
   | param => exact exprBoundNamesInScope_param hvalidate hparamsInScope
   | localVar => exact exprBoundNamesInScope_localVar hvalidate hlocalsInScope
   | constructorArg => exact exprBoundNamesInScope_constructorArg hvalidate hconstructorArgsInScope
@@ -1387,8 +1388,8 @@ theorem collectExprNames_mem_exprBoundNames_of_core
     (hcore : FunctionBody.ExprCompileCore expr) :
     ∀ name, name ∈ collectExprNames expr → name ∈ FunctionBody.exprBoundNames expr := by
   induction hcore with
-  | literal _ | caller | contractAddress | txOrigin | msgValue | blockTimestamp | blockNumber | chainid
-  | blobbasefee | calldatasize | returndataSize | constructorArg _ =>
+  | literal _ | caller | contractAddress | txOrigin | blockCoinbase | msgValue | blockTimestamp
+  | blockNumber | chainid | blobbasefee | calldatasize | returndataSize | constructorArg _ =>
       intro name hmem; simp [collectExprNames] at hmem
   | param _ | localVar _ =>
       intro name hmem; simpa [collectExprNames, FunctionBody.exprBoundNames] using hmem

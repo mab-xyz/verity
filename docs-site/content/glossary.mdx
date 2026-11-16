@@ -36,9 +36,9 @@ The EVM-shaped state model used by EDSL contracts. Backed by a single
 address, address-keyed mapping, uint256-keyed mapping, double mapping,
 dynamic arrays), EIP-1153 transient storage, the transaction context
 (`sender`, `thisAddress`, `msgValue`, `selfBalance`, `blockTimestamp`,
-`blockNumber`, `chainId`, `blobBaseFee`), calldata, memory, tracked
-`knownAddresses` per slot for conservation proofs, and an append-only
-`events` log.
+`blockNumber`, `chainId`, `blobBaseFee`, `blockCoinbase`), calldata, memory,
+tracked `knownAddresses` per slot for conservation proofs, and an
+append-only `events` log.
 
 ### Differential test
 

@@ -123,7 +123,8 @@ def runtimeStateMatchesIR
   state.returndata = runtime.world.returndata ∧
   runtime.world.byteMemory = state.byteMemory ∧
   state.revertData = [] ∧
-  runtime.world.rawReturndata = none
+  runtime.world.rawReturndata = none ∧
+  state.blockCoinbase = runtime.world.blockCoinbase.val
 
 /-- Runtime/IR alignment for constructor execution, whose calldata is not
 selector-prefixed. This is the constructor-shaped analogue of
@@ -152,7 +153,8 @@ def constructorRuntimeStateMatchesIR
   state.events = SourceSemantics.encodeEvents runtime.world.events ∧
   state.codeSize = (fun addr => (runtime.world.codeSize addr).val) ∧
   state.returndata = runtime.world.returndata ∧
-  runtime.world.byteMemory = state.byteMemory
+  runtime.world.byteMemory = state.byteMemory ∧
+  state.blockCoinbase = runtime.world.blockCoinbase.val
 
 theorem runtimeStateMatchesIR_returndata
     {fields : List Field}
@@ -186,7 +188,7 @@ theorem runtimeStateMatchesIR_rawReturndata
     {fields : List Field} {runtime : SourceSemantics.RuntimeState} {state : IRState}
     (h : runtimeStateMatchesIR fields runtime state) :
     runtime.world.rawReturndata = none :=
-  h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+  h.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 
 def initialIRStateForTx
     (spec : CompilationModel)
@@ -208,6 +210,7 @@ def initialIRStateForTx
     chainId := tx.chainId
     blobBaseFee := tx.blobBaseFee
     txOrigin := tx.txOrigin
+    blockCoinbase := tx.blockCoinbase
     selector := tx.functionSelector
     events := SourceSemantics.encodeEvents initialWorld.events
     codeSize := fun addr => (initialWorld.codeSize addr).val
@@ -390,6 +393,27 @@ theorem evalIRExpr_txOrigin_of_runtimeStateMatchesIR
     Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallViaEvmYulLean, htxOrigin, htxMod]
   rfl
 
+theorem evalIRExpr_blockCoinbase_of_runtimeStateMatchesIR
+    {fields : List Field}
+    {runtime : SourceSemantics.RuntimeState}
+    {state : IRState}
+    (hmatch : runtimeStateMatchesIR fields runtime state) :
+    evalIRExpr state (YulExpr.call "coinbase" []) =
+      some (SourceSemantics.evalExpr fields runtime (.blockCoinbase)) := by
+  rcases hmatch with
+    ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, hcoinbase⟩
+  have hcoinbaseLt : runtime.world.blockCoinbase.val < Compiler.Constants.evmModulus := by
+    have haddrLt : runtime.world.blockCoinbase.val < Verity.Core.Address.modulus :=
+      Verity.Core.Address.val_lt_modulus runtime.world.blockCoinbase
+    dsimp [Verity.Core.Address.modulus, Verity.Core.ADDRESS_MODULUS,
+      Compiler.Constants.evmModulus] at haddrLt ⊢
+    omega
+  have hcoinbaseMod : runtime.world.blockCoinbase.val % Compiler.Constants.evmModulus =
+      runtime.world.blockCoinbase.val := Nat.mod_eq_of_lt hcoinbaseLt
+  simp [evalIRExpr, evalIRCall, evalIRExprs,
+    Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallWithEvmYulLeanContext,
+    Compiler.Proofs.YulGeneration.Backends.evalBuiltinCallViaEvmYulLean, hcoinbase, hcoinbaseMod]
+
 theorem eval_compileExpr_caller
     {fields : List Field}
     {runtime : SourceSemantics.RuntimeState}
@@ -469,6 +493,18 @@ theorem eval_compileExpr_txOrigin
       some (SourceSemantics.evalExpr fields runtime (.txOrigin)) := by
   simp [CompilationModel.compileExpr, CompilationModel.compileExprWithInternals]
   exact evalIRExpr_txOrigin_of_runtimeStateMatchesIR hmatch
+
+theorem eval_compileExpr_blockCoinbase
+    {fields : List Field}
+    {runtime : SourceSemantics.RuntimeState}
+    {state : IRState}
+    (hmatch : runtimeStateMatchesIR fields runtime state) :
+    evalIRExpr state
+        (CompilationModel.compileExpr fields .calldata .blockCoinbase |>.toOption.getD
+          (YulExpr.lit 0)) =
+      some (SourceSemantics.evalExpr fields runtime (.blockCoinbase)) := by
+  simp [CompilationModel.compileExpr, CompilationModel.compileExprWithInternals]
+  exact evalIRExpr_blockCoinbase_of_runtimeStateMatchesIR hmatch
 
 theorem evalIRExpr_calldatasize_of_runtimeStateMatchesIR
     {fields : List Field}
@@ -4932,8 +4968,8 @@ theorem compileExpr_core_ok
     ∃ exprIR, CompilationModel.compileExpr fields .calldata expr = Except.ok exprIR := by
   induction hcore with
   | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin
-    | msgValue | blockTimestamp | blockNumber | chainid | blobbasefee | calldatasize
-    | returndataSize =>
+    | blockCoinbase | msgValue | blockTimestamp | blockNumber | chainid | blobbasefee
+    | calldatasize | returndataSize =>
       exact ⟨_, by
         unfold CompilationModel.compileExpr CompilationModel.compileExprWithInternals
         rfl⟩
@@ -5297,6 +5333,10 @@ private theorem compileExprSound_txOrigin {fields : List Field} :
     CompileExprSound fields .txOrigin := fun _ _ _ _ _ hruntime =>
   eval_compileExpr_txOrigin hruntime
 
+private theorem compileExprSound_blockCoinbase {fields : List Field} :
+    CompileExprSound fields .blockCoinbase := fun _ _ _ _ _ hruntime =>
+  eval_compileExpr_blockCoinbase hruntime
+
 private theorem compileExprSound_msgValue {fields : List Field} :
     CompileExprSound fields .msgValue := fun _ _ _ _ _ hruntime =>
   eval_compileExpr_msgValue hruntime
@@ -5621,7 +5661,8 @@ private theorem compileExprSound_of_core {fields : List Field} {expr : Expr}
   ExprCompileCore.rec (motive := fun expr _ => CompileExprSound fields expr)
     compileExprSound_literal compileExprSound_param compileExprSound_constructorArg
     compileExprSound_localVar compileExprSound_caller compileExprSound_contractAddress
-    compileExprSound_txOrigin compileExprSound_msgValue compileExprSound_blockTimestamp
+    compileExprSound_txOrigin compileExprSound_blockCoinbase compileExprSound_msgValue
+    compileExprSound_blockTimestamp
     compileExprSound_blockNumber compileExprSound_chainid compileExprSound_blobbasefee
     compileExprSound_calldatasize compileExprSound_returndataSize compileExprSound_add
     compileExprSound_sub compileExprSound_mul compileExprSound_div compileExprSound_mod

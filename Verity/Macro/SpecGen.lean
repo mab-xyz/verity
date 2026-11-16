@@ -10,7 +10,7 @@ open Lean
 set_option hygiene false
 
 attribute [verity_unfold_simps]
-  Verity.msgSender Verity.msgValue Verity.baseFee Verity.gasPrice
+  Verity.msgSender Verity.msgValue Verity.baseFee Verity.gasPrice Verity.blockCoinbase
   Verity.getStorageAddr Verity.getStorage Verity.setStorage Verity.setStorageAddr
   Verity.getMapping Verity.setMapping Verity.setMapping2 Verity.getMappingUint
   Verity.setMappingUint Verity.getMapping2
@@ -145,6 +145,7 @@ macro_rules
              (try simp +zetaDelta only [$[$extra],*,
                Verity.Macro.PreservesSlot.slotIndex, Verity.Macro.PreservesSlot.preserved,
                Verity.msgSender, Verity.msgValue, Verity.baseFee, Verity.gasPrice,
+               Verity.blockCoinbase,
                Verity.getStorageAddr, Verity.getStorage, Verity.setStorage, Verity.setStorageAddr,
                Verity.getMapping, Verity.setMapping, Verity.setMapping2, Verity.getMappingUint,
                Verity.setMappingUint, Verity.getMapping2,
@@ -211,6 +212,7 @@ macro_rules
                Verity.Macro.PreservesSlot.slotIndex, Verity.Macro.PreservesSlot.preserved,
                Verity.Specs.ToSpecStorageKey.toSpecStorageKey, Verity.Specs.SpecStorageKey.Preserved,
                Verity.msgSender, Verity.msgValue, Verity.baseFee, Verity.gasPrice,
+               Verity.blockCoinbase,
                Verity.getStorageAddr, Verity.getStorage, Verity.setStorage, Verity.setStorageAddr,
                Verity.getMapping, Verity.setMapping, Verity.setMapping2, Verity.getMappingUint,
                Verity.setMappingUint, Verity.getMapping2,

@@ -41,7 +41,8 @@ def TxContextNormalized (tx : IRTransaction) : Prop :=
   tx.blockNumber < Compiler.Constants.evmModulus ∧
   tx.chainId < Compiler.Constants.evmModulus ∧
   tx.blobBaseFee < Compiler.Constants.evmModulus ∧
-  tx.txOrigin < Compiler.Constants.addressModulus
+  tx.txOrigin < Compiler.Constants.addressModulus ∧
+  tx.blockCoinbase < Compiler.Constants.addressModulus
 
 def compiledFunctionIR
     (selector : Nat) (spec : FunctionSpec) (returns : List ParamType) (bodyStmts : List YulStmt) :
@@ -1017,8 +1018,8 @@ theorem initialIRStateForTx_matches_runtime
         bindings := []
         selector := tx.functionSelector, errors := model.errors }
       (FunctionBody.initialIRStateForTx model tx initialWorld) := by
-  obtain ⟨hsender, hthis, hmsgValue, htimestamp, hnumber, hchain, hblob, htxOrigin⟩ :=
-    htxNormalized
+  obtain ⟨hsender, hthis, hmsgValue, htimestamp, hnumber, hchain, hblob, htxOrigin,
+    hcoinbase⟩ := htxNormalized
   refine ⟨?_, ?_⟩
   · simpa [FunctionBody.initialIRStateForTx, SourceSemantics.effectiveFields,
       SourceSemantics.encodeStorage] using
@@ -1026,7 +1027,8 @@ theorem initialIRStateForTx_matches_runtime
   · simp [FunctionBody.initialIRStateForTx, SourceSemantics.withTransactionContext,
       Verity.wordToAddress, addressWord_roundtrip_of_lt_addressModulus hsender,
       addressWord_roundtrip_of_lt_addressModulus hthis,
-      addressWord_roundtrip_of_lt_addressModulus htxOrigin, Nat.mod_eq_of_lt hmsgValue,
+      addressWord_roundtrip_of_lt_addressModulus htxOrigin,
+      addressWord_roundtrip_of_lt_addressModulus hcoinbase, Nat.mod_eq_of_lt hmsgValue,
       Nat.mod_eq_of_lt htimestamp, Nat.mod_eq_of_lt hnumber, Nat.mod_eq_of_lt hchain,
       Nat.mod_eq_of_lt hblob, calldataSize_val_of_txCalldataSizeFitsEvm hcalldataSizeFits]
     rfl
@@ -1047,7 +1049,7 @@ theorem initialIRStateForTx_matches_constructor_runtime
         selector := tx.functionSelector, errors := model.errors }
       (FunctionBody.initialIRStateForTx model tx initialWorld) := by
   rcases htxNormalized with
-    ⟨hsender, hthis, hmsgValue, htimestamp, hnumber, hchain, hblob, htxOrigin⟩
+    ⟨hsender, hthis, hmsgValue, htimestamp, hnumber, hchain, hblob, htxOrigin, hcoinbase⟩
   have hsenderEvm : tx.sender < Compiler.Constants.evmModulus := by
     dsimp [Compiler.Constants.addressModulus, Compiler.Constants.evmModulus] at hsender ⊢
     omega
@@ -1072,13 +1074,15 @@ theorem initialIRStateForTx_matches_constructor_runtime
       Compiler.Constants.evmModulus, Verity.Core.UINT256_MODULUS] using
         hcalldataSizeFits
   have htxOriginWord := addressWord_roundtrip_of_lt_addressModulus htxOrigin
+  have hcoinbaseWord := addressWord_roundtrip_of_lt_addressModulus hcoinbase
   refine ⟨?_, ?_⟩
   · simpa [FunctionBody.initialIRStateForTx, SourceSemantics.effectiveFields,
       SourceSemantics.encodeStorage] using
       (SourceSemantics.encodeStorage_withConstructorTransactionContext model initialWorld tx).symm
   · simp [FunctionBody.initialIRStateForTx,
       SourceSemantics.withConstructorTransactionContext, Verity.wordToAddress, hsenderWord,
-      hthisWord, htxOriginWord, Nat.mod_eq_of_lt hmsgValue, Nat.mod_eq_of_lt htimestamp,
+      hthisWord, htxOriginWord, hcoinbaseWord, Nat.mod_eq_of_lt hmsgValue,
+      Nat.mod_eq_of_lt htimestamp,
       Nat.mod_eq_of_lt hnumber, Nat.mod_eq_of_lt hchain, Nat.mod_eq_of_lt hblob]
     exact ⟨rfl, hcalldataSizeFits'⟩
 

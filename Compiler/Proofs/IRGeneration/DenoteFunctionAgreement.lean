@@ -26,6 +26,7 @@ def ofIRTransaction (tx : IRTransaction) : Denote.DenoteTransaction :=
     chainId := tx.chainId
     blobBaseFee := tx.blobBaseFee
     txOrigin := tx.txOrigin
+    blockCoinbase := tx.blockCoinbase
     functionSelector := tx.functionSelector
     args := tx.args }
 

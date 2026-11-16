@@ -26,6 +26,7 @@ private def testBlockNumber : Nat := 0xABCDEF
 private def testChainId : Nat := 1
 private def testBlobBaseFee : Nat := 0xB10B
 private def testTxOrigin : Nat := 0xDEAD
+private def testBlockCoinbase : Nat := 0xC01B
 private def testSelector : Nat := 0x12345678
 private def testCalldata : List Nat := [0xDEADBEEF]
 
@@ -43,6 +44,7 @@ private def nativeEvalWithContext (func : String) (args : List Nat) : Option Nat
     testChainId
     testBlobBaseFee
     testTxOrigin
+    testBlockCoinbase
     testSelector
     testCalldata
     func
@@ -110,6 +112,11 @@ example :
 example :
     nativeEvalWithContext "blobbasefee" [] =
       some (testBlobBaseFee % Compiler.Constants.evmModulus) := by
+  native_decide
+
+example :
+    nativeEvalWithContext "coinbase" [] =
+      some (testBlockCoinbase % Compiler.Constants.evmModulus) := by
   native_decide
 
 example :

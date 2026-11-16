@@ -52,3 +52,4 @@ import Contracts.Smoke.ScalarAbiValidationSmoke
 import Contracts.Smoke.ConstructorEventSmoke
 import Contracts.Smoke.ConstructorStringArgSmoke
 import Contracts.Smoke.InterfaceBytesCallSmoke
+import Contracts.Smoke.CoinbaseSmoke

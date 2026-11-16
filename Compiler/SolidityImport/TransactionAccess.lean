@@ -36,6 +36,7 @@ def expressionAccesses (oracle : DenoteOracle) (fields : List Field)
   -- A deployment's immutable is code, not storage.
   | .immutable _ => .ok []
   | .caller | .contractAddress | .selfBalance | .txOrigin | .baseFee | .gasPrice | .blockTimestamp | .blockNumber | .chainid | .calldatasize | .returndataSize => .ok []
+  | .blockCoinbase => .ok []
   | .storage name => do
       let some (field, slot) := findFieldWithResolvedSlot fields name
         | throw s!"unknown observed field {name}"

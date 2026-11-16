@@ -146,8 +146,8 @@ theorem denote_evalExpr_eq (fields : List Field) (s : DenoteState) :
   | .externalCall _ (_ :: _ :: _ :: _) | .internalCall .. | .intrinsic .. | .forkIfAtLeast ..
   | .mulDiv512Down .. | .mulDiv512Up .. | .adtConstruct .. | .adtTag .. | .adtField .. | .abiLiteral ..
   | .caller | .contractAddress | .txOrigin | .chainid | .msgValue | .selfBalance
-  | .blockTimestamp | .blockNumber | .blobbasefee | .baseFee | .gasPrice | .calldatasize
-  | .returndataSize => rfl
+  | .blockTimestamp | .blockNumber | .blobbasefee | .baseFee | .gasPrice | .blockCoinbase
+  | .calldatasize | .returndataSize => rfl
   | .bitNot a | .logicalNot a | .mload a | .tload a | .calldataload a | .extcodesize a
   | .mapping _ a | .mappingWord _ a _ | .mappingPackedWord _ a _ _ | .mappingUint _ a
   | .mappingChain _ [a] | .structMember _ a _ | .storageArrayElement _ a | .arrayElement _ a
