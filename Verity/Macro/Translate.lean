@@ -3519,7 +3519,14 @@ private partial def bodyNeedsLinkedCallContext
 
 /-- Executable form of an ABI-frame typed-interface call (`isAbiFrameTypedInterface`): it
 journals `Contracts.abiCallBytes selector args`, the calldata the compiled
-`Compiler.Modules.Calls.abiCallModule` sends, and the threaded context answers it. -/
+`Compiler.Modules.Calls.abiCallModule` sends, and the threaded context answers it.
+
+It takes precedence over `linked_contracts` hops: a bound callee body takes the arguments
+as values and records no journal entry, while the compiled call sends head/tail bytes, and
+`abiEncodeCall` payloads have no source-level value for it. So an ABI-frame method of a
+named binding is answered by the context (the bound body is not run), and one of a
+`deferred` binding is answered as any deferred call, with `site.calldata` the ABI bytes
+(a `withLinks` / `withViewLinks` body receives those bytes, selector included). -/
 private def abiFrameExecutableCall? (externalDecls : Array ExternalDecl)
     (params : Array ParamDecl) (ext : ExternalDecl) (target : Term) (args : Array Term)
     (adv : Term) : CommandElabM (Option Term) := do
@@ -3585,12 +3592,13 @@ private def rewriteTypedInterfaceCall?
   let extName := interfaceExternalName interfaceName methodName
   let some ext := externalDecls.find? (fun ext => ext.name == extName) | pure none
   let isView := externalDecls.any (fun candidate => candidate.name == extName && candidate.isView)
+  -- ABI-frame calls are routed before any linked hop (see `abiFrameExecutableCall?`).
+  if let some call ← abiFrameExecutableCall? externalDecls params ext target argTerms adv then
+    return some call
   match ← hopBoundCallTerm? linkedContracts target targetName extName argTerms isView adv
       (returnTys := ext.returnTys) (registryMode := registryMode) with
   | some hop => return some hop
   | none => pure ()
-  if let some call ← abiFrameExecutableCall? externalDecls params ext target argTerms adv then
-    return some call
   let siteId := natTerm (linkedExternalSiteId externalDecls extName)
   let arity := natTerm (← flattenedExternalArity ext)
   let rewritten ← argTerms.zip ext.params |>.mapM fun (arg, ty) => do
@@ -3636,12 +3644,13 @@ private def rewriteLinkedCallTerm
         match stripParens target with
         | `(term| $targetIdent:ident) => pure (toString targetIdent.getId)
         | _ => pure ""
+      -- ABI-frame calls are routed before any linked hop (see `abiFrameExecutableCall?`).
+      if let some call ← abiFrameExecutableCall? externalDecls params ext target args adv then
+        return call
       match ← hopBoundCallTerm? linkedContracts target targetName extName args ext.isView adv
           (returnTys := ext.returnTys) (registryMode := registryMode) with
       | some hop => return hop
       | none => pure ()
-      if let some call ← abiFrameExecutableCall? externalDecls params ext target args adv then
-        return call
       let rewritten ← args.zip ext.params |>.mapM fun (arg, ty) => do
         let tyTerm ← contractValueTypeTerm ty
         executableLinkedArgWords (← `(($arg : $tyTerm))) ty
@@ -3664,12 +3673,13 @@ private def rewriteLinkedCallTerm
         match stripParens target with
         | `(term| $targetIdent:ident) => pure (toString targetIdent.getId)
         | _ => pure ""
+      -- ABI-frame calls are routed before any linked hop (see `abiFrameExecutableCall?`).
+      if let some call ← abiFrameExecutableCall? externalDecls params ext target args adv then
+        return call
       match ← hopBoundCallTerm? linkedContracts target targetName extName args ext.isView adv
           (returnTys := ext.returnTys) (registryMode := registryMode) with
       | some hop => return hop
       | none => pure ()
-      if let some call ← abiFrameExecutableCall? externalDecls params ext target args adv then
-        return call
       let rewritten ← args.zip ext.params |>.mapM fun (arg, ty) => do
         let tyTerm ← contractValueTypeTerm ty
         executableLinkedArgWords (← `(($arg : $tyTerm))) ty

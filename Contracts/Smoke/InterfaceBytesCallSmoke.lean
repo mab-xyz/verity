@@ -93,6 +93,48 @@ verity_contract InterfaceBytesCallSmoke where
   function reentrancy_trusted notifyVia (safe : ISafe, data : Bytes) : Unit := do
     safe.notify data
 
+/-! ### ABI-frame methods of `linked_contracts` bindings
+
+An ABI-frame call is routed before any linked hop: the bound body is not run (it takes
+argument values and journals nothing, while the compiled call sends head/tail bytes); the
+context answers the call, which journals `abiCallBytes`. -/
+
+verity_contract BytesVenueCallee where
+  storage
+
+  function view counterparty (kind : Uint8, p : Bytes) : Address := do
+    return zeroAddress
+
+verity_contract LinkedBytesCaller where
+  storage
+
+  interfaces
+    interface IBytesVenue where
+      function counterparty(Uint8, Bytes) view returns (Address)
+    end
+
+  linked_contracts
+    venue : IBytesVenue := BytesVenueCallee
+
+  function reentrancy_trusted who (venue : IBytesVenue, kind : Uint8, p : Bytes) : Address := do
+    let c ← venue.counterparty kind p
+    return c
+
+verity_contract DeferredBytesCaller where
+  storage
+
+  interfaces
+    interface IBytesVenue where
+      function counterparty(Uint8, Bytes) view returns (Address)
+    end
+
+  linked_contracts
+    venue : IBytesVenue := deferred
+
+  function reentrancy_trusted who (venue : IBytesVenue, kind : Uint8, p : Bytes) : Address := do
+    let c ← venue.counterparty kind p
+    return c
+
 /-! ### `abiCallBytes` is Solidity's encoding
 
 Reference bytes from Foundry (`cast calldata`):
@@ -258,6 +300,29 @@ private def forwardRun (adv : AdversaryModel) :=
       s.calls.map (·.calldata) ==
         [abiCallBytes 0x5229073f [.word 0xbb, .word 0,
           .bytes (byteArrayOfValues (hexBytes pairSwapCalldataHex)), .word 0]]
+  | .revert _ _ => false
+
+-- A named `linked_contracts` binding to an ABI-frame method: the context answers (not the
+-- bound body, which would return the zero address), and the journal holds the ABI bytes.
+private def wordAdversary (word : Nat) : AdversaryModel :=
+  { AdversaryModel.stub with result := fun _ _ => .success [word] }
+
+private def linkedWhoCalldata : List Nat :=
+  abiCallBytes 0xbf27bce2 [.word 4, .bytes (byteArrayOfValues [1, 2, 3])]
+
+#guard
+  match LinkedBytesCaller.who (ExecutableCallContext.ofAdversary (wordAdversary 0xabc))
+      (Verity.wordToAddress 0x7e) 4 (byteArrayOfValues [1, 2, 3]) Verity.defaultState with
+  | .success c s =>
+      c == Verity.wordToAddress 0xabc && s.calls.map (·.calldata) == [linkedWhoCalldata]
+  | .revert _ _ => false
+
+-- The same through a `deferred` binding.
+#guard
+  match DeferredBytesCaller.who (ExecutableCallContext.ofAdversary (wordAdversary 0xabc))
+      (Verity.wordToAddress 0x7e) 4 (byteArrayOfValues [1, 2, 3]) Verity.defaultState with
+  | .success c s =>
+      c == Verity.wordToAddress 0xabc && s.calls.map (·.calldata) == [linkedWhoCalldata]
   | .revert _ _ => false
 
 end Contracts.Smoke

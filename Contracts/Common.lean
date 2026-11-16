@@ -1274,7 +1274,8 @@ exactly the words the linked body returns and keeps its own storage. -/
 `links site.name target = some body` selects the site (`site.name` is the typed
 interface name `"IFace.method"`, `target` the call-site target address, so one
 interface called on different addresses can be answered by different bodies); `body` receives the site calldata words
-(the ABI-flattened arguments) and returns the ABI result words. A reverting
+(the ABI-flattened arguments; for an ABI-frame method, `abiCallBytes`, the
+selector and head/tail calldata as byte values) and returns the ABI result words. A reverting
 body answers `.revert []`. Every other site (mutable calls, unlinked names) is
 answered by `base`. State transition and gas stay `base`'s (a static call never
 commits a transition). -/
