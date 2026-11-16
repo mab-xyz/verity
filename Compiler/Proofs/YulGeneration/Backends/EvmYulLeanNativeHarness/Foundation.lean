@@ -3455,6 +3455,28 @@ theorem NativePrimCallPreservesWord_coinbase
       cases hExec
       exact hLookup
 
+theorem NativePrimCallPreservesWord_coinbase_values
+    (name : EvmYul.Identifier)
+    (expected : EvmYul.Literal) :
+    ∀ fuel state values final rets,
+      state[name]! = expected →
+        EvmYul.Yul.primCall fuel state EvmYul.Operation.COINBASE values =
+          .ok (final, rets) →
+        final[name]! = expected := by
+  intro fuel state values final rets hLookup hExec
+  cases values with
+  | nil =>
+      exact NativePrimCallPreservesWord_coinbase name expected
+        fuel state final rets hLookup hExec
+  | cons value rest =>
+      cases fuel with
+      | zero =>
+          simp [EvmYul.Yul.primCall] at hExec
+      | succ fuel' =>
+          rw [primCall_coinbase_any_ok] at hExec
+          cases hExec
+          exact hLookup
+
 theorem NativePrimCallPreservesWord_gaslimit
     (name : EvmYul.Identifier)
     (expected : EvmYul.Literal) :
@@ -5464,7 +5486,7 @@ theorem lookupRuntimePrimOp_ne_none_of_allowed_of_ne_mappingSlot
     rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
     rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
     rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
-    rfl | rfl
+    rfl | rfl | rfl
   all_goals
     simp only [Backends.lookupRuntimePrimOp_add,
       Backends.lookupRuntimePrimOp_sub, Backends.lookupRuntimePrimOp_mul,
@@ -5483,6 +5505,7 @@ theorem lookupRuntimePrimOp_ne_none_of_allowed_of_ne_mappingSlot
       Backends.lookupRuntimePrimOp_address, Backends.lookupRuntimePrimOp_callvalue,
       Backends.lookupRuntimePrimOp_timestamp, Backends.lookupRuntimePrimOp_number,
       Backends.lookupRuntimePrimOp_chainid, Backends.lookupRuntimePrimOp_blobbasefee,
+      Backends.lookupRuntimePrimOp_coinbase,
       Backends.lookupRuntimePrimOp_calldataload,
       Backends.lookupRuntimePrimOp_calldatasize,
       Backends.lookupRuntimePrimOp_returndatasize,
@@ -5497,7 +5520,7 @@ private def nativeAllowedRuntimePrimOps : List (EvmYul.Operation .Yul) :=
   [.ADD, .SUB, .MUL, .DIV, .SDIV, .MOD, .SMOD, .ADDMOD, .MULMOD, .EXP, .SIGNEXTEND, .LT, .GT,
     .SLT, .SGT, .EQ, .ISZERO, .AND, .OR, .XOR, .NOT, .BYTE, .SHL, .SHR, .SAR, .KECCAK256, .ADDRESS,
     .CALLER, .ORIGIN, .CALLVALUE, .CALLDATALOAD, .CALLDATASIZE, .RETURNDATASIZE, .TIMESTAMP,
-    .NUMBER, .CHAINID, .BLOBBASEFEE, .MLOAD, .SLOAD, .TLOAD, .EXTCODESIZE]
+    .NUMBER, .CHAINID, .BLOBBASEFEE, .COINBASE, .MLOAD, .SLOAD, .TLOAD, .EXTCODESIZE]
 
 /-- Every runtime primitive looked up for an allowed call name is one of
     `nativeAllowedRuntimePrimOps`. -/
@@ -5514,7 +5537,7 @@ private theorem lookupRuntimePrimOp_mem_nativeAllowedRuntimePrimOps
     rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
     rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
     rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
-    rfl | rfl
+    rfl | rfl | rfl
   all_goals
     simp only [Backends.lookupRuntimePrimOp_add,
       Backends.lookupRuntimePrimOp_sub, Backends.lookupRuntimePrimOp_mul,
@@ -5533,6 +5556,7 @@ private theorem lookupRuntimePrimOp_mem_nativeAllowedRuntimePrimOps
       Backends.lookupRuntimePrimOp_address, Backends.lookupRuntimePrimOp_callvalue,
       Backends.lookupRuntimePrimOp_timestamp, Backends.lookupRuntimePrimOp_number,
       Backends.lookupRuntimePrimOp_chainid, Backends.lookupRuntimePrimOp_blobbasefee,
+      Backends.lookupRuntimePrimOp_coinbase,
       Backends.lookupRuntimePrimOp_calldataload,
       Backends.lookupRuntimePrimOp_calldatasize,
       Backends.lookupRuntimePrimOp_returndatasize,
@@ -5573,6 +5597,7 @@ private theorem NativePrimCallPreservesWord_values_of_mem_nativeAllowedRuntimePr
     NativePrimCallPreservesWord_timestamp_values _ _,
     NativePrimCallPreservesWord_number_values _ _, NativePrimCallPreservesWord_chainid_values _ _,
     NativePrimCallPreservesWord_blobbasefee_values _ _,
+    NativePrimCallPreservesWord_coinbase_values _ _,
     NativePrimCallPreservesWord_mload_values _ _, NativePrimCallPreservesWord_sload_values _ _,
     NativePrimCallPreservesWord_tload_values _ _,
     NativePrimCallPreservesWord_extcodesize_values _ _, ?_⟩

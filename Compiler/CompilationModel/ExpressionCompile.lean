@@ -331,6 +331,7 @@ def compileExprWithInternals (fields : List Field)
   | Expr.blobbasefee => pure (YulExpr.call "blobbasefee" [])
   | Expr.baseFee => pure (YulExpr.call "basefee" [])
   | Expr.gasPrice => pure (YulExpr.call "gasprice" [])
+  | Expr.blockCoinbase => pure (YulExpr.call "coinbase" [])
   | Expr.mload offset => do
       pure (YulExpr.call "mload" [← compileExprWithInternals fields dynamicSource internalFunctions offset])
   | Expr.tload offset => do

@@ -418,7 +418,7 @@ been stored into scratch memory, while source semantics resolves arguments
 the block-local scratch bindings), so the two evaluation points agree. -/
 def exprEventArgAtomic : Expr → Bool
   | .literal _ | .param _ | .localVar _ | .caller | .contractAddress
-  | .txOrigin | .msgValue | .blockTimestamp | .blockNumber | .chainid
+  | .txOrigin | .blockCoinbase | .msgValue | .blockTimestamp | .blockNumber | .chainid
   | .blobbasefee | .calldatasize => true
   | .immutable _ => false
   | _ => false
@@ -864,6 +864,7 @@ decoding. Raw constructor calldata observations therefore remain outside the
 current body-level support interface until the deploy-wrapper proof exists. -/
 def exprTouchesUnsupportedConstructorRawCalldataSurface : Expr → Bool
   | .literal _ | .param _ | .immutable _ | .localVar _ | .caller | .contractAddress | .txOrigin
+  | .blockCoinbase
   | .chainid | .msgValue | .selfBalance | .baseFee | .gasPrice | .blockTimestamp | .blockNumber
   | .blobbasefee | .constructorArg _ | .returndataSize => false
   | .calldatasize => true
@@ -1039,7 +1040,7 @@ structure SupportedReturnProfile (fn : FunctionSpec) : Prop where
 before any richer contract surface is considered. This tracks proof-core gaps
 rather than a semantic trust boundary. -/
 def exprTouchesUnsupportedCoreSurface : Expr → Bool
-  | .literal _ | .param _ | .caller | .contractAddress | .txOrigin
+  | .literal _ | .param _ | .caller | .contractAddress | .txOrigin | .blockCoinbase
   | .chainid | .msgValue | .blockTimestamp | .blockNumber
   | .blobbasefee | .calldatasize | .returndataSize | .localVar _ | .constructorArg _
   | .arrayLength _ | .dynamicBytesEq _ _ => false
@@ -1105,7 +1106,7 @@ def exprTouchesUnsupportedCoreSurface : Expr → Bool
 /-- Stateful expression surfaces not yet carried by the generic Layer 2 body
 interface. These are the next storage/layout-style widening targets. -/
 def exprTouchesUnsupportedStateSurface : Expr → Bool
-  | .literal _ | .param _ | .immutable _ | .caller | .contractAddress | .txOrigin
+  | .literal _ | .param _ | .immutable _ | .caller | .contractAddress | .txOrigin | .blockCoinbase
   | .chainid | .msgValue | .selfBalance | .baseFee | .gasPrice | .blockTimestamp | .blockNumber
   | .localVar _ => false
   | .storage _ | .storageAddr _ => true
@@ -1173,7 +1174,7 @@ def exprTouchesUnsupportedCallSurface : Expr → Bool
       else true
   | .internalCall _ _ | .externalCall _ _ => true
   | .call _ _ _ _ _ _ _ | .staticcall _ _ _ _ _ _ | .delegatecall _ _ _ _ _ _ => true
-  | .literal _ | .param _ | .immutable _ | .caller | .contractAddress | .txOrigin
+  | .literal _ | .param _ | .immutable _ | .caller | .contractAddress | .txOrigin | .blockCoinbase
   | .chainid | .msgValue | .selfBalance | .baseFee | .gasPrice | .blockTimestamp | .blockNumber
   | .localVar _ | .storage _ | .storageAddr _
   | .constructorArg _ | .blobbasefee
@@ -1240,7 +1241,7 @@ def exprTouchesUnsupportedHelperSurface : Expr → Bool
       if name == builtinExpName then
         exprTouchesUnsupportedHelperSurface base || exprTouchesUnsupportedHelperSurface exponent
       else false
-  | .literal _ | .param _ | .immutable _ | .caller | .contractAddress | .txOrigin
+  | .literal _ | .param _ | .immutable _ | .caller | .contractAddress | .txOrigin | .blockCoinbase
   | .chainid | .msgValue | .selfBalance | .baseFee | .gasPrice | .blockTimestamp | .blockNumber
   | .localVar _ | .storage _ | .storageAddr _
   | .constructorArg _ | .blobbasefee
@@ -1316,7 +1317,7 @@ def exprTouchesInternalHelperSurface : Expr → Bool
       if name == builtinExpName then
         exprTouchesInternalHelperSurface base || exprTouchesInternalHelperSurface exponent
       else false
-  | .literal _ | .param _ | .immutable _ | .caller | .contractAddress | .txOrigin
+  | .literal _ | .param _ | .immutable _ | .caller | .contractAddress | .txOrigin | .blockCoinbase
   | .chainid | .msgValue | .selfBalance | .baseFee | .gasPrice | .blockTimestamp | .blockNumber
   | .localVar _ | .storage _ | .storageAddr _
   | .constructorArg _ | .blobbasefee
@@ -1389,7 +1390,7 @@ def exprTouchesUnsupportedForeignSurface : Expr → Bool
         exprTouchesUnsupportedForeignSurface base || exprTouchesUnsupportedForeignSurface exponent
       else true
   | .externalCall _ _ => true
-  | .literal _ | .param _ | .immutable _ | .caller | .contractAddress | .txOrigin
+  | .literal _ | .param _ | .immutable _ | .caller | .contractAddress | .txOrigin | .blockCoinbase
   | .chainid | .msgValue | .selfBalance | .baseFee | .gasPrice | .blockTimestamp | .blockNumber
   | .localVar _ | .storage _ | .storageAddr _
   | .constructorArg _ | .blobbasefee
@@ -1457,7 +1458,7 @@ def exprTouchesUnsupportedLowLevelSurface : Expr → Bool
       if name == builtinExpName then
         exprTouchesUnsupportedLowLevelSurface base || exprTouchesUnsupportedLowLevelSurface exponent
       else false
-  | .literal _ | .param _ | .immutable _ | .caller | .contractAddress | .txOrigin
+  | .literal _ | .param _ | .immutable _ | .caller | .contractAddress | .txOrigin | .blockCoinbase
   | .chainid | .msgValue | .selfBalance | .baseFee | .gasPrice | .blockTimestamp | .blockNumber
   | .localVar _ | .storage _ | .storageAddr _
   | .constructorArg _ | .blobbasefee
@@ -1520,7 +1521,7 @@ generic-induction boundary does not silently widen or tighten while the new
 feature-local interfaces are introduced alongside it. -/
 def exprTouchesUnsupportedContractSurface (expr : Expr) : Bool :=
   match expr with
-  | .literal _ | .param _ | .caller | .contractAddress | .txOrigin
+  | .literal _ | .param _ | .caller | .contractAddress | .txOrigin | .blockCoinbase
   | .chainid | .msgValue | .blockTimestamp | .blockNumber
   | .blobbasefee | .calldatasize | .returndataSize
   | .localVar _ | .constructorArg _ => false
@@ -2596,7 +2597,7 @@ mutual
     -- validators).
     | .literal _ | .param _ | .immutable _ | .constructorArg _
     | .storage _ | .storageAddr _
-    | .caller | .contractAddress | .txOrigin | .chainid | .msgValue | .selfBalance
+    | .caller | .contractAddress | .txOrigin | .blockCoinbase | .chainid | .msgValue | .selfBalance
     | .baseFee | .gasPrice | .blockTimestamp | .blockNumber | .blobbasefee
     | .calldatasize | .returndataSize
     | .localVar _ | .arrayLength _ | .memoryArrayLength _ | .storageArrayLength _
@@ -3669,7 +3670,8 @@ private theorem exprCompileCore_helperSurfaceClosed
     (hcore : FunctionBody.ExprCompileCore expr) :
     exprTouchesUnsupportedHelperSurface expr = false := by
   induction hcore with
-  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin | msgValue
+  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin
+    | blockCoinbase | msgValue
     | blockTimestamp | blockNumber | chainid | blobbasefee | calldatasize | returndataSize =>
       simp only [exprTouchesUnsupportedHelperSurface]
   | add _ _ ihL ihR
@@ -3714,7 +3716,8 @@ private theorem exprCompileCore_internalHelperCallNames_nil
     (hcore : FunctionBody.ExprCompileCore expr) :
     exprInternalHelperCallNames expr = [] := by
   induction hcore with
-  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin | msgValue
+  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin
+    | blockCoinbase | msgValue
     | blockTimestamp | blockNumber | chainid | blobbasefee | calldatasize | returndataSize =>
       simp only [exprInternalHelperCallNames]
   | add _ _ ihL ihR
@@ -5202,7 +5205,8 @@ private theorem exprCompileCore_usesArrayElement_false
     (hcore : FunctionBody.ExprCompileCore expr) :
     exprUsesArrayElement expr = false := by
   induction hcore with
-  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin | msgValue
+  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin
+    | blockCoinbase | msgValue
     | blockTimestamp | blockNumber | chainid
     | blobbasefee | calldatasize | returndataSize =>
       simp only [exprUsesArrayElement, Bool.false_or]
@@ -5235,7 +5239,8 @@ private theorem exprCompileCore_usesStorageArrayElement_false
     (hcore : FunctionBody.ExprCompileCore expr) :
     exprUsesStorageArrayElement expr = false := by
   induction hcore with
-  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin | msgValue
+  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin
+    | blockCoinbase | msgValue
     | blockTimestamp | blockNumber | chainid
     | blobbasefee | calldatasize | returndataSize =>
       simp only [exprUsesStorageArrayElement, Bool.false_or]
@@ -5268,7 +5273,8 @@ private theorem exprCompileCore_usesDynamicBytesEq_false
     (hcore : FunctionBody.ExprCompileCore expr) :
     exprUsesDynamicBytesEq expr = false := by
   induction hcore with
-  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin | msgValue
+  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin
+    | blockCoinbase | msgValue
     | blockTimestamp | blockNumber | chainid
     | blobbasefee | calldatasize | returndataSize =>
       simp only [exprUsesDynamicBytesEq, Bool.false_or]
@@ -5679,7 +5685,8 @@ private theorem exprCompileCore_usesMulDiv512_false
     (hcore : FunctionBody.ExprCompileCore expr) :
     exprUsesMulDiv512 expr = false := by
   induction hcore with
-  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin | msgValue
+  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin
+    | blockCoinbase | msgValue
     | blockTimestamp | blockNumber | chainid
     | blobbasefee | calldatasize | returndataSize =>
       simp only [exprUsesMulDiv512, Bool.false_or]
@@ -5712,7 +5719,8 @@ private theorem exprCompileCore_usesParamDynamicHeadWord_false
     (hcore : FunctionBody.ExprCompileCore expr) :
     exprUsesParamDynamicHeadWord expr = false := by
   induction hcore with
-  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin | msgValue
+  | literal | param | constructorArg | localVar | caller | contractAddress | txOrigin
+    | blockCoinbase | msgValue
     | blockTimestamp | blockNumber | chainid
     | blobbasefee | calldatasize | returndataSize =>
       simp only [exprUsesParamDynamicHeadWord, Bool.false_or]

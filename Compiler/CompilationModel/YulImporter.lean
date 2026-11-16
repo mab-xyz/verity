@@ -82,6 +82,7 @@ private partial def mechanicsOfExpr : YulExpr → List LowLevelMechanic
         | "number" => [.blockNumber]
         | "basefee" => [.baseFee]
         | "gasprice" => [.gasPrice]
+        | "coinbase" => [.blockCoinbase]
         | _ => []
       here ++ args.flatMap mechanicsOfExpr
   | _ => []

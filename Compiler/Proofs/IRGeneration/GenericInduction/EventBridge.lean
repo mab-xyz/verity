@@ -237,6 +237,10 @@ private theorem compileExpr_atomic_shape
       exact Or.inr (Or.inr ⟨"address", by simpa [CompilationModel.compileExpr, CompilationModel.compileExprWithInternals, pure, Except.pure] using hcompile.symm⟩)
   case txOrigin =>
       exact Or.inr (Or.inr ⟨"origin", by simpa [CompilationModel.compileExpr, CompilationModel.compileExprWithInternals, pure, Except.pure] using hcompile.symm⟩)
+  case blockCoinbase =>
+      exact Or.inr (Or.inr ⟨"coinbase", by
+        simpa [CompilationModel.compileExpr, CompilationModel.compileExprWithInternals, pure,
+          Except.pure] using hcompile.symm⟩)
   case msgValue =>
       exact Or.inr (Or.inr ⟨"callvalue", by simpa [CompilationModel.compileExpr, CompilationModel.compileExprWithInternals, pure, Except.pure] using hcompile.symm⟩)
   case blockTimestamp =>
@@ -2198,9 +2202,9 @@ private theorem eventRuntimeStateMatchesIR_updatePhysical
           byteMemory := bytes
           events := irEvents } := by
   obtain ⟨hstor, htrans, hsender, hmsgVal, hthis, hts, hbn, hcid, hblob, htx, hsel, hcd, hcds,
-    -, hret, -, hcode, hrd, -, hrevert⟩ := hmatch
+    -, hret, -, hcode, hrd, -, hrevert, hcoinbase⟩ := hmatch
   refine ⟨?_, htrans, hsender, hmsgVal, hthis, hts, hbn, hcid, hblob, htx, hsel, hcd, hcds,
-    rfl, hret, hevents, hcode, hrd, rfl, hrevert⟩
+    rfl, hret, hevents, hcode, hrd, rfl, hrevert, hcoinbase⟩
   rw [hstor]
   funext slot
   exact congrArg _ (SourceSemantics.encodeStorageAt_congr rfl rfl rfl)

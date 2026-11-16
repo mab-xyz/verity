@@ -60,6 +60,9 @@ EXCLUDED_CONTRACTS = {
     "FallbackNonReentrantSmoke",
     # Registry counterexample for an unlocked fallback write (Lean proof only).
     "FallbackUnlockedWriteSmoke",
+    # `payCoinbase` sends ETH from the unfunded contract to `block.coinbase`;
+    # test/CoinbaseSmoke.t.sol funds it and sets the coinbase with `vm.coinbase`.
+    "CoinbaseSmoke",
     # The generator does not fund the deployed contract before calling value
     # forwarding ECM smoke entrypoints. Lean macro/model tests cover this
     # low-level surface; a generated no-revert Foundry stub would be invalid.

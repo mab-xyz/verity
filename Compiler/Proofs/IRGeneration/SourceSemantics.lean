@@ -1339,6 +1339,7 @@ def evalExpr (fields : List Field) (state : RuntimeState) : Expr → Option Nat
   | .blobbasefee => some state.world.blobBaseFee.val
   | .baseFee => some state.world.baseFee.val
   | .gasPrice => some state.world.gasPrice.val
+  | .blockCoinbase => some state.world.blockCoinbase.val
   | .calldatasize => some state.world.calldataSize.val
   | .returndataSize => some state.world.returndataSize
   | .localVar name => some (lookupValue state.bindings name)
@@ -2943,6 +2944,7 @@ def withTransactionContext (world : Verity.ContractState) (tx : IRTransaction) :
     chainId := tx.chainId
     blobBaseFee := tx.blobBaseFee
     txOrigin := Verity.wordToAddress tx.txOrigin
+    blockCoinbase := Verity.wordToAddress tx.blockCoinbase
     calldataSize := Verity.Core.Uint256.ofNat (4 + tx.args.length * 32)
     calldata := tx.args
     returndata := []
@@ -2959,6 +2961,7 @@ def withConstructorTransactionContext (world : Verity.ContractState) (tx : IRTra
     chainId := tx.chainId
     blobBaseFee := tx.blobBaseFee
     txOrigin := Verity.wordToAddress tx.txOrigin
+    blockCoinbase := Verity.wordToAddress tx.blockCoinbase
     calldataSize := Verity.Core.Uint256.ofNat (tx.args.length * 32)
     calldata := tx.args
     returndata := []
@@ -2975,6 +2978,17 @@ def withConstructorTransactionContext (world : Verity.ContractState) (tx : IRTra
 @[simp] theorem returndata_withConstructorTransactionContext
     (world : Verity.ContractState) (tx : IRTransaction) :
     (withConstructorTransactionContext world tx).returndata = [] := rfl
+
+/-- The transaction frame installs the block beneficiary that `coinbase()` reads. -/
+@[simp] theorem blockCoinbase_withTransactionContext
+    (world : Verity.ContractState) (tx : IRTransaction) :
+    (withTransactionContext world tx).blockCoinbase = Verity.wordToAddress tx.blockCoinbase :=
+  rfl
+
+/-- `Expr.blockCoinbase` evaluates to the world's block beneficiary. -/
+@[simp] theorem evalExpr_blockCoinbase (fields : List Field) (state : RuntimeState) :
+    evalExpr fields state .blockCoinbase = some state.world.blockCoinbase.val := by
+  simp [evalExpr]
 
 /-- Call-frame updates keep `storageWords`, so the storage views are unchanged. -/
 @[simp] theorem storage_withTransactionContext
@@ -3477,6 +3491,7 @@ mutual
     | .blobbasefee => some state.world.blobBaseFee.val
     | .baseFee => some state.world.baseFee.val
     | .gasPrice => some state.world.gasPrice.val
+    | .blockCoinbase => some state.world.blockCoinbase.val
     | .calldatasize => some state.world.calldataSize.val
     | .returndataSize => some state.world.returndataSize
     | .localVar name => some (lookupValue state.bindings name)

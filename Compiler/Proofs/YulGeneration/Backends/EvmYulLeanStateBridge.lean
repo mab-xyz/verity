@@ -417,11 +417,12 @@ def natToAddress (n : Nat) : AccountAddress :=
     `excessBlobGas`, so this zero header represents only
     `EvmYul.MIN_BASE_FEE_PER_BLOB_GAS`; the native harness fails closed when a
     selected runtime path reads `blobbasefee()` with any other transaction
-    `blobBaseFee`. -/
+    `blobBaseFee`. The `beneficiary` carries `blockCoinbase`, which EVMYulLean's
+    `coinbase()` reads. -/
 def mkBlockHeader (state : YulState) : BlockHeader :=
   { parentHash := ⟨0⟩
     ommersHash := ⟨0⟩
-    beneficiary := ⟨0, by decide⟩
+    beneficiary := natToAddress state.blockCoinbase
     stateRoot := ⟨0⟩
     transRoot := ByteArray.empty
     receiptRoot := ByteArray.empty
