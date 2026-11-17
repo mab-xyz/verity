@@ -44,3 +44,4 @@ import Contracts.Smoke.SpillFreeMemorySmoke
 import Contracts.Smoke.LoopSemanticsSmoke
 import Contracts.Smoke.InterfaceBytesCallSmoke
 import Contracts.Smoke.CoinbaseSmoke
+import Contracts.Smoke.ScalarAbiValidationSmoke
