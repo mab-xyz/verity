@@ -102,7 +102,7 @@ context answers the call, which journals `abiCallBytes`. -/
 verity_contract BytesVenueCallee where
   storage
 
-  function view counterparty (kind : Uint8, p : Bytes) : Address := do
+  function view counterparty (_kind : Uint8, _p : Bytes) : Address := do
     return zeroAddress
 
 verity_contract LinkedBytesCaller where

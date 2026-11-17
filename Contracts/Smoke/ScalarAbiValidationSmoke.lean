@@ -47,7 +47,7 @@ verity_contract ScalarAbiValidationSmoke where
     return value
 
   -- Every head word is validated, also those the body never reads.
-  function firstOfMixed (full : Uint256, narrow : Uint8, account : Address, flag : Bool) :
+  function firstOfMixed (full : Uint256, _narrow : Uint8, _account : Address, _flag : Bool) :
       Uint256 := do
     return full
 
