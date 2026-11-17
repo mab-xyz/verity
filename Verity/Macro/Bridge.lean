@@ -272,7 +272,7 @@ private def mkFieldFrameConjunct (field : StorageFieldDecl) : CommandElabM Term 
       `(∀ k, s'.storageMap $slotLit k = s.storageMap $slotLit k)
   | .mappingUintToUint256 | .mappingUintToEnum _ _ | .mappingStruct .uint256 _ =>
       `(∀ k, s'.storageMapUint $slotLit k = s.storageMapUint $slotLit k)
-  | .mappingStruct .bytes32 _ | .mappingChain _ | .mappingChainEnum _ _ _
+  | .mappingStruct .bytes32 _ | .mappingStruct (.bytesN _) _ | .mappingChain _ | .mappingChainEnum _ _ _
     | .mapping2AddressToAddressToUint256 | .mapping2AddressToAddressToEnum _ _
     | .mappingStruct2 _ _ _ =>
       -- These shapes compile to hashed `storage` slots rather than the legacy
