@@ -105,4 +105,22 @@ contract PropertyBytesNMappingKeySmokeTest is YulTestBase {
         (bool ok,) = target.call(abi.encodeWithSignature("setValueNarrowed(uint256,uint256)", uint256(1), uint256(1)));
         require(ok, "setValueNarrowed reverted unexpectedly");
     }
+    // Property 13: TODO decode and assert `selectorConstant` result
+    function testTODO_SelectorConstant_DecodeAndAssert() public {
+        vm.prank(alice);
+        (bool ok, bytes memory ret) = target.call(abi.encodeWithSignature("selectorConstant()"));
+        require(ok, "selectorConstant reverted unexpectedly");
+        assertEq(ret.length, 32, "selectorConstant ABI return length mismatch (expected 32 bytes)");
+        // TODO(#1011): decode `ret` and assert the concrete postcondition from Lean theorem.
+        ret;
+    }
+    // Property 14: TODO decode and assert `isSelector` result
+    function testTODO_IsSelector_DecodeAndAssert() public {
+        vm.prank(alice);
+        (bool ok, bytes memory ret) = target.call(abi.encodeWithSignature("isSelector(bytes4)", bytes4(uint32(0x01))));
+        require(ok, "isSelector reverted unexpectedly");
+        assertEq(ret.length, 32, "isSelector ABI return length mismatch (expected 32 bytes)");
+        // TODO(#1011): decode `ret` and assert the concrete postcondition from Lean theorem.
+        ret;
+    }
 }
