@@ -500,7 +500,7 @@ jobs:
 
       - name: Restore prepared Lean workspace build
         if: steps.local-restore-lean-workspace.outcome != 'success'
-        run: tar -I zstd -xf lean-workspace-build.tar.zst
+        run: tar -P --keep-directory-symlink -I zstd -xf lean-workspace-build.tar.zst
 
       - name: Build split Lake packages independently
         run: python3 scripts/check_split_package_builds.py
@@ -592,7 +592,7 @@ jobs:
 
       - name: Restore prepared Lean workspace build
         if: steps.local-restore-lean-workspace.outcome != 'success'
-        run: tar -I zstd -xf lean-workspace-build.tar.zst
+        run: tar -P --keep-directory-symlink -I zstd -xf lean-workspace-build.tar.zst
 
       - name: Setup pinned solc for Solidity import
         run: python3 scripts/setup_solc_import.py
@@ -738,7 +738,7 @@ jobs:
 
       - name: Restore prepared Lean workspace build
         if: steps.local-restore-lean-workspace.outcome != 'success'
-        run: tar -I zstd -xf lean-workspace-build.tar.zst
+        run: tar -P --keep-directory-symlink -I zstd -xf lean-workspace-build.tar.zst
 
       - name: Reset ccache statistics
         run: ccache -z
@@ -1136,7 +1136,7 @@ jobs:
 
       - name: Restore prepared Lean workspace build
         if: steps.local-restore-lean-workspace.outcome != 'success'
-        run: tar -I zstd -xf lean-workspace-build.tar.zst
+        run: tar -P --keep-directory-symlink -I zstd -xf lean-workspace-build.tar.zst
 
       - name: Restore compiler workspace build (local)
         id: local-restore-compiler-workspace
@@ -1155,7 +1155,7 @@ jobs:
 
       - name: Restore compiler workspace build
         if: steps.local-restore-compiler-workspace.outcome != 'success'
-        run: tar -I zstd -xf lean-workspace-compiler-build.tar.zst
+        run: tar -P --keep-directory-symlink -I zstd -xf lean-workspace-compiler-build.tar.zst
 
       - name: Restore generated Yul (local)
         id: local-restore-yul
@@ -1346,7 +1346,7 @@ jobs:
 
       - name: Restore prepared Lean workspace build
         if: steps.local-restore-lean-workspace.outcome != 'success'
-        run: tar -I zstd -xf lean-workspace-build.tar.zst
+        run: tar -P --keep-directory-symlink -I zstd -xf lean-workspace-build.tar.zst
 
       - name: Restore compiler workspace build (local)
         id: local-restore-compiler-workspace
@@ -1365,7 +1365,7 @@ jobs:
 
       - name: Restore compiler workspace build
         if: steps.local-restore-compiler-workspace.outcome != 'success'
-        run: tar -I zstd -xf lean-workspace-compiler-build.tar.zst
+        run: tar -P --keep-directory-symlink -I zstd -xf lean-workspace-compiler-build.tar.zst
 
       - name: Check preinstalled Foundry for Solidity slice comparisons
         id: preinstalled-foundry-slices
@@ -1701,7 +1701,7 @@ jobs:
 
       - name: Restore prepared Lean workspace build
         if: steps.local-restore-lean-workspace.outcome != 'success'
-        run: tar -I zstd -xf lean-workspace-build.tar.zst
+        run: tar -P --keep-directory-symlink -I zstd -xf lean-workspace-build.tar.zst
 
       - name: Restore compiler workspace build (local)
         id: local-restore-compiler-workspace
@@ -1720,7 +1720,7 @@ jobs:
 
       - name: Restore compiler workspace build
         if: steps.local-restore-compiler-workspace.outcome != 'success'
-        run: tar -I zstd -xf lean-workspace-compiler-build.tar.zst
+        run: tar -P --keep-directory-symlink -I zstd -xf lean-workspace-compiler-build.tar.zst
 
       - name: Restore patched smoke Yul (local)
         id: local-restore-yul-patched-smoke
