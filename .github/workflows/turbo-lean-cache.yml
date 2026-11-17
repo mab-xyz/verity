@@ -50,7 +50,8 @@ concurrency:
 
 env:
   VERIFY_CACHE_BUCKET: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('ref-{0}', github.ref_name) }}
-  VERIFY_MAIN_CACHE_BUCKET: ref-main
+  # mab-xyz/verity fork: PRs start warm from the `ours` cache.
+  VERIFY_MAIN_CACHE_BUCKET: ref-ours
   TURBO_LEAN_COMMIT: 1949eaac9d790d1dd13e357d45aad010fa0be644 # v0.1.0 (Season 14 / audit-spec v2.1)
 
 jobs:

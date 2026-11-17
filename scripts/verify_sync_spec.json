@@ -74,7 +74,6 @@
     "ours"
   ],
   "expected_trigger_keys": [
-    "schedule",
     "push",
     "pull_request",
     "workflow_dispatch"
@@ -295,7 +294,7 @@
   },
   "expected_workflow_concurrency": {
     "group": "${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.action == 'closed' && format('closed-pr-cleanup-{0}-{1}', github.event.pull_request.number, github.run_id) || (github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || (github.event_name == 'schedule' && format('schedule-{0}', github.ref) || github.ref)) }}",
-    "cancel-in-progress": "${{ github.event_name != 'schedule' && !(github.event_name == 'pull_request' && github.event.action == 'closed') }}"
+    "cancel-in-progress": "${{ github.event_name != 'schedule' && !(github.event_name == 'pull_request' && github.event.action == 'closed') && !(github.event_name == 'push' && github.ref == 'refs/heads/ours') }}"
   },
   "expected_workflow_env": {
     "SOLC_VERSION": "0.8.33",
@@ -306,7 +305,7 @@
     "VERIFY_USE_STICKY_DISKS": "${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.clean_build)) && 'false' || 'true' }}",
     "VERIFY_DISABLE_LAKE_CACHE_RESTORE": "${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.clean_build)) && 'true' || 'false' }}",
     "VERIFY_CACHE_BUCKET": "${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('ref-{0}', github.ref_name) }}",
-    "VERIFY_MAIN_CACHE_BUCKET": "ref-main",
+    "VERIFY_MAIN_CACHE_BUCKET": "ref-ours",
     "VERIFY_LOCAL_ARTIFACT_ROOT": "/srv/verity-ci-cache/artifacts"
   },
   "build_compiler_job_names": [
