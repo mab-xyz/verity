@@ -1674,6 +1674,10 @@ Compiler.Proofs.IRGeneration.DenoteAgreement.denoteFunction_eq
 -- Compiler/Proofs/IRGeneration/Dispatch.lean
 Compiler.Proofs.IRGeneration.Dispatch.runtimeContractOfFunctions_legacyCompatible
 Compiler.Proofs.IRGeneration.Dispatch.runtimeContractOfFunctions_disjoint
+Compiler.Proofs.IRGeneration.Dispatch.compileFunctionSpec_ok_loads_prefix
+Compiler.Proofs.IRGeneration.Dispatch.reverted_matches_initial_rollback
+Compiler.Proofs.IRGeneration.Dispatch.execIRFunction_bindFail_matches
+Compiler.Proofs.IRGeneration.Dispatch.execIRFunctionWithInternals_bindFail_matches
 Compiler.Proofs.IRGeneration.Dispatch.interpretContract_correct_of_compiled_functions
 -- Compiler.Proofs.IRGeneration.Dispatch.interpretFunction_reverted_of_standard_bind_none  -- private
 Compiler.Proofs.IRGeneration.Dispatch.interpretContractWithInternals_correct_of_compiled_functions
@@ -1703,10 +1707,7 @@ Compiler.Proofs.IRGeneration.BytesParamDispatch.interpretContract_correct_of_fun
 
 -- Compiler/Proofs/IRGeneration/DispatchGeneric.lean
 Compiler.Proofs.IRGeneration.Dispatch.runtimeContractOfFunctions_internalFunctions
--- Compiler.Proofs.IRGeneration.Dispatch.decodeSupportedParamWord_some_of_supported  -- private
-Compiler.Proofs.IRGeneration.Dispatch.bindSupportedParams_some_of_supported
 Compiler.Proofs.IRGeneration.Dispatch.bindExternalParams_some_length
-Compiler.Proofs.IRGeneration.Dispatch.not_length_le_of_bindSupportedParams_none
 Compiler.Proofs.IRGeneration.interpretFunction_eq_reverted_of_bind_none
 Compiler.Proofs.IRGeneration.interpretFunction_eq_reverted_of_bindExternal_none
 Compiler.Proofs.IRGeneration.interpretFunctionWithHelpers_eq_reverted_of_bindExternal_none
@@ -1726,7 +1727,6 @@ Compiler.Proofs.IRGeneration.find_function_none_of_forall₂_generic
 -- Compiler.Proofs.IRGeneration.selector_eq_of_meta  -- private
 -- Compiler.Proofs.IRGeneration.interpretContractWith_matches_of_lookup  -- private
 -- Compiler.Proofs.IRGeneration.dispatch_hit_of_external  -- private
--- Compiler.Proofs.IRGeneration.bindExternalParams_some_of_supported  -- private
 -- Compiler.Proofs.IRGeneration.bindSupportedParams_some_of_bindExternalParams_some  -- private
 -- Compiler.Proofs.IRGeneration.bindSupportedParams_none_of_bindExternalParams_none  -- private
 Compiler.Proofs.IRGeneration.interpretContractWith_correct_generic_external
@@ -1791,7 +1791,6 @@ Compiler.Proofs.IRGeneration.DynamicParamLoading.exec_arrayLoaderStmts_then
 Compiler.Proofs.IRGeneration.DynamicParamLoading.exec_dynamicCompositeLoaderStmts_then
 -- Compiler.Proofs.IRGeneration.DynamicParamLoading.scalar_cases  -- private
 Compiler.Proofs.IRGeneration.DynamicParamLoading.genSingleParamLoad_scalar
--- Compiler.Proofs.IRGeneration.DynamicParamLoading.decode_total_of_scalar  -- private
 -- Compiler.Proofs.IRGeneration.DynamicParamLoading.decodeSupportedParamWord_mod  -- private
 Compiler.Proofs.IRGeneration.DynamicParamLoading.applyBindingsToIRState_append
 Compiler.Proofs.IRGeneration.DynamicParamLoading.applyBindingsToIRState_calldata
@@ -1921,6 +1920,10 @@ Compiler.Proofs.IRGeneration.Function.compileConstructor_ok_components
 -- Compiler.Proofs.IRGeneration.Function.execIRStmts_genParamLoads_prebindRawArgs_extraFuel  -- private
 Compiler.Proofs.IRGeneration.Function.exec_compiledFunctionIR_of_body_extraFuel
 Compiler.Proofs.IRGeneration.Function.exec_compiledFunctionIR_of_body
+-- Compiler.Proofs.IRGeneration.Function.body_fuel_eq_extraFuel  -- private
+Compiler.Proofs.IRGeneration.Function.execIRFunction_revert_of_bind_none
+Compiler.Proofs.IRGeneration.Function.execIRStmtsWithInternals_append_of_prefix_revert
+Compiler.Proofs.IRGeneration.Function.execIRFunctionWithInternals_revert_of_bind_none
 Compiler.Proofs.IRGeneration.Function.execIRStmtsWithInternals_append_of_prefix_continue
 Compiler.Proofs.IRGeneration.Function.exec_genParamLoads_supported_then_extraFuel_withInternals
 Compiler.Proofs.IRGeneration.Function.exec_compiledFunctionIR_withInternals_of_body_extraFuel
@@ -2034,6 +2037,9 @@ Compiler.Proofs.IRGeneration.Function.stmtList_setMappingWordSingle_compiledLega
 Compiler.Proofs.IRGeneration.Function.compileFunctionSpec_body_legacyCompatible_of_interface
 Compiler.Proofs.IRGeneration.Function.compileFunctionSpec_body_legacyCompatible_of_compileCore
 Compiler.Proofs.IRGeneration.Function.compileFunctionSpec_body_legacyCompatible_of_terminalCore
+-- Compiler.Proofs.IRGeneration.Function.scalarValidationGuard_calldataload_callsDisjoint  -- private
+-- Compiler.Proofs.IRGeneration.Function.calldataload_lit_callsDisjoint  -- private
+-- Compiler.Proofs.IRGeneration.Function.genScalarCleanLoad_calldataload_callsDisjoint  -- private
 -- Compiler.Proofs.IRGeneration.Function.genScalarLoad_calldataload_callsDisjoint  -- private
 -- Compiler.Proofs.IRGeneration.Function.genParamLoadBodyFrom_calldataload_callsDisjoint  -- private
 -- Compiler.Proofs.IRGeneration.Function.genParamLoads_callsDisjoint_of_builtins  -- private
@@ -2183,6 +2189,7 @@ Compiler.Proofs.IRGeneration.FunctionBody.bindingsBounded_nil
 Compiler.Proofs.IRGeneration.FunctionBody.wordNormalize_lt_evmModulus
 -- Compiler.Proofs.IRGeneration.FunctionBody.maskedWordNormalize_lt_evmModulus  -- private
 -- Compiler.Proofs.IRGeneration.FunctionBody.decodeSupportedParamWord_passthrough_lt_evmModulus  -- private
+-- Compiler.Proofs.IRGeneration.FunctionBody.value_eq_of_validatedWord  -- private
 -- Compiler.Proofs.IRGeneration.FunctionBody.decodeSupportedParamWord_masked_lt_evmModulus  -- private
 -- Compiler.Proofs.IRGeneration.FunctionBody.decodeSupportedParamWord_bool_lt_evmModulus  -- private
 Compiler.Proofs.IRGeneration.FunctionBody.decodeSupportedParamWord_lt_evmModulus
@@ -3747,6 +3754,8 @@ Compiler.Proofs.IRGeneration.compile_preserves_semantics_guarded
 -- Compiler/Proofs/IRGeneration/GuardedContractShape.lean
 Compiler.Proofs.IRGeneration.attachNonReentrantGuard_metadata
 Compiler.Proofs.IRGeneration.compileGuardedFunctionSpec_ok_metadata
+Compiler.Proofs.IRGeneration.attachNonReentrantGuard_loads_prefix
+Compiler.Proofs.IRGeneration.compileGuardedFunctionSpec_ok_loads_prefix
 Compiler.Proofs.IRGeneration.guarded_functions_forall₂_of_mapM_ok
 
 -- Compiler/Proofs/IRGeneration/GuardedDispatch.lean
@@ -4252,14 +4261,24 @@ Compiler.Proofs.IRGeneration.ParamLoading.calldataloadWord_aligned
 Compiler.Proofs.IRGeneration.ParamLoading.execIRStmts_cons_of_execIRStmt_continue_extraFuel
 -- Compiler.Proofs.IRGeneration.ParamLoading.land_mod_evm_right  -- private
 -- Compiler.Proofs.IRGeneration.ParamLoading.exec_genScalarLoad_supported_then_word_passthrough  -- private
--- Compiler.Proofs.IRGeneration.ParamLoading.exec_genScalarLoad_supported_then_uintN  -- private
--- Compiler.Proofs.IRGeneration.ParamLoading.exec_genScalarLoad_supported_then_intN  -- private
--- Compiler.Proofs.IRGeneration.ParamLoading.exec_genScalarLoad_supported_then_bytesN  -- private
--- Compiler.Proofs.IRGeneration.ParamLoading.exec_genScalarLoad_supported_then_uint8  -- private
--- Compiler.Proofs.IRGeneration.ParamLoading.exec_genScalarLoad_supported_then_uint16  -- private
--- Compiler.Proofs.IRGeneration.ParamLoading.exec_genScalarLoad_supported_then_address  -- private
--- Compiler.Proofs.IRGeneration.ParamLoading.exec_genScalarLoad_supported_then_bool  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.execIRStmts_revert_zero  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.execIRStmt_revert_guard  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.execIRStmt_revert_guard_cases  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.evalIRExpr_scalarValidationCond  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.exec_validatedScalarLoad  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.and_mod_evm_lt  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.validatedScalarLoad_uint8  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.validatedScalarLoad_uint16  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.validatedScalarLoad_uintN  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.validatedScalarLoad_bytesN  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.validatedScalarLoad_address  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.validatedScalarLoad_intN  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.validatedScalarLoad_bool  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.validatedScalarLoad_of_supported  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.exec_validatedScalarLoad_then  -- private
+-- Compiler.Proofs.IRGeneration.ParamLoading.exec_validatedScalarLoad_revert  -- private
 Compiler.Proofs.IRGeneration.ParamLoading.exec_genScalarLoad_supported_then
+Compiler.Proofs.IRGeneration.ParamLoading.exec_genScalarLoad_supported_revert
 Compiler.Proofs.IRGeneration.ParamLoading.bindSupportedParams_names
 Compiler.Proofs.IRGeneration.ParamLoading.bindSupportedParams_names_nodup
 -- Compiler.Proofs.IRGeneration.ParamLoading.exec_minInputSizeCheck_supported_noop  -- private
@@ -4270,6 +4289,10 @@ Compiler.Proofs.IRGeneration.ParamLoading.exec_genParamLoads_supported
 -- Compiler.Proofs.IRGeneration.ParamLoading.exec_genParamLoads_supported_then_extraFuel_guard  -- private
 Compiler.Proofs.IRGeneration.ParamLoading.exec_genParamLoads_supported_then_extraFuel
 Compiler.Proofs.IRGeneration.ParamLoading.exec_genParamLoads_supported_then
+-- Compiler.Proofs.IRGeneration.ParamLoading.bindSupportedParams_cons_none  -- private
+Compiler.Proofs.IRGeneration.ParamLoading.exec_genParamLoadBodyFrom_supported_revert
+-- Compiler.Proofs.IRGeneration.ParamLoading.execIRStmts_cons_of_execIRStmt_revert_extraFuel  -- private
+Compiler.Proofs.IRGeneration.ParamLoading.exec_genParamLoads_supported_revert
 
 -- Compiler/Proofs/IRGeneration/PhysicalAbiBytes.lean
 Compiler.Proofs.IRGeneration.PhysicalAbiBytes.chunk_length_le
@@ -4426,6 +4449,8 @@ Compiler.Proofs.IRGeneration.SourceSemantics.bindSupportedParams_eq_dynamicAbi
 Compiler.Proofs.IRGeneration.SourceSemantics.bindSupportedParams_some_length
 Compiler.Proofs.IRGeneration.SourceSemantics.bindExternalParams_eq_some_of_bindSupportedParams
 Compiler.Proofs.IRGeneration.SourceSemantics.bindExternalParams_eq_none_of_not_length_le
+Compiler.Proofs.IRGeneration.SourceSemantics.scalarHeadParamType_of_supported
+Compiler.Proofs.IRGeneration.SourceSemantics.bindExternalParams_eq_none_of_bindSupportedParams_none
 Compiler.Proofs.IRGeneration.SourceSemantics.bindSupportedParams_take_param_length
 Compiler.Proofs.IRGeneration.SourceSemantics.returndata_withTransactionContext
 Compiler.Proofs.IRGeneration.SourceSemantics.returndata_withConstructorTransactionContext
@@ -6010,6 +6035,8 @@ Compiler.Proofs.YulGeneration.Backends.isDynamicParamType_false_of_static_scalar
 -- Compiler.Proofs.YulGeneration.Backends.bridgedExpr_iszero_ident  -- private
 -- Compiler.Proofs.YulGeneration.Backends.bridgedStraightStmt_revert_zero  -- private
 -- Compiler.Proofs.YulGeneration.Backends.bridgedExpr_lt_calldatasize  -- private
+-- Compiler.Proofs.YulGeneration.Backends.scalarValidationGuard_calldataload_bridged  -- private
+Compiler.Proofs.YulGeneration.Backends.genScalarCleanLoad_calldataload_bridged
 Compiler.Proofs.YulGeneration.Backends.genScalarLoad_calldataload_bridged
 -- Compiler.Proofs.YulGeneration.Backends.BridgedStmts_flatMap  -- private
 -- Compiler.Proofs.YulGeneration.Backends.genStaticTypeLoads_go_calldataload_bridged  -- private
@@ -6020,6 +6047,7 @@ Compiler.Proofs.YulGeneration.Backends.genStaticTypeLoads_calldataload_bridged
 -- Compiler.Proofs.YulGeneration.Backends.genParamLoadBodyFrom_calldataload_static_scalar_cons  -- private
 -- Compiler.Proofs.YulGeneration.Backends.genParamLoadBodyFrom_calldataload_static_scalar_bridged  -- private
 Compiler.Proofs.YulGeneration.Backends.genParamLoads_scalar_bridged
+-- Compiler.Proofs.YulGeneration.Backends.genScalarCleanLoad_noFuncDefs  -- private
 -- Compiler.Proofs.YulGeneration.Backends.genScalarLoad_noFuncDefs  -- private
 -- Compiler.Proofs.YulGeneration.Backends.genStaticTypeLoads_go_noFuncDefs  -- private
 -- Compiler.Proofs.YulGeneration.Backends.genStaticTypeLoads_noFuncDefs  -- private
@@ -10870,9 +10898,14 @@ Compiler.CompilationModel.DenoteStaticCall.classifyStaticWordCall_decoded_iff
 Compiler.CompilationModel.DenoteStaticCall.decodeStaticUint256_eq_return_iff_classify
 
 -- Verity/Core/Model/DynamicAbi.lean
+Compiler.CompilationModel.DynamicAbi.validatedWord_self
+Compiler.CompilationModel.DynamicAbi.validatedWord_of_eq
+Compiler.CompilationModel.DynamicAbi.validatedWord_eq_some_iff
+Compiler.CompilationModel.DynamicAbi.validatedWord_eq_none_iff
 Compiler.CompilationModel.DynamicAbi.arrayElement?_index_oob
 Compiler.CompilationModel.DynamicAbi.arrayElement?_index_in_bounds
 Compiler.CompilationModel.DynamicAbi.bindExternalParam_bytes_refines_dynamic_loader
+Compiler.CompilationModel.DynamicAbi.bindExternalParam_eq_map_of_scalar
 Compiler.CompilationModel.DynamicAbi.bindExternalParam_scalar_eq_some_inv
 -- Compiler.CompilationModel.DynamicAbi.decodeLengthPrefixedDynamicParam?_eq_some_inv  -- private
 -- Compiler.CompilationModel.DynamicAbi.bindExternalParam_lengthPrefixed_eq_some_inv  -- private
@@ -10893,6 +10926,12 @@ Compiler.CompilationModel.DynamicAbi.bindExternalParam_dynamicComposite_eq_some_
 Compiler.CompilationModel.DynamicAbi.bindExternalParamsFrom_some_of_witnesses
 Compiler.CompilationModel.DynamicAbi.bindExternalParam_staticTuple_arm
 Compiler.CompilationModel.DynamicAbi.bindExternalParam_staticFixedArray_eq_none
+Compiler.CompilationModel.DynamicAbi.wordNormalize_mod
+Compiler.CompilationModel.DynamicAbi.decodeSupportedParamWord_mod
+-- Compiler.CompilationModel.DynamicAbi.externalWordAt?_aligned_mod  -- private
+Compiler.CompilationModel.DynamicAbi.paramHeadSize_of_scalarHead
+Compiler.CompilationModel.DynamicAbi.bindExternalParamsFrom_scalar_eq_none
+Compiler.CompilationModel.DynamicAbi.bindExternalParams_eq_none_of_bindSupportedParams_none
 
 -- Verity/Core/Model/DynamicAbiRoundTrip.lean
 -- Compiler.CompilationModel.DynamicAbi.and_mask_eq_mod  -- private
@@ -12104,4 +12143,4 @@ run_cmd do
     for line in lines do
       liftIO <| IO.println line
 
--- Total: 11268 theorems/lemmas (8767 public, 2501 private, 0 sorry'd)
+-- Total: 11307 theorems/lemmas (8790 public, 2517 private, 0 sorry'd)
