@@ -166,7 +166,8 @@ abstract contract YulTestBase is Test {
         string memory artifactPath = string.concat(outDir, "/", name, ".yul");
         if (vm.exists(artifactPath)) return;
         string memory manifest = "packages/verity-examples/contracts.manifest";
-        if (vm.exists(manifest) && _manifestListsContract(manifest, name)) {
+        // Checked in the shell: foundry.toml's fs_permissions do not cover packages/.
+        if (_manifestListsContract(manifest, name)) {
             _ensureVerityManifestYul(manifest, name, outDir);
         } else {
             _ensureVerityModuleYul(string.concat("Contracts.", name, ".", name), name, outDir);
@@ -178,7 +179,7 @@ abstract contract YulTestBase is Test {
         cmds[0] = "bash";
         cmds[1] = "-c";
         cmds[2] = string.concat(
-            "if grep -qE '\\.", name, "[[:space:]]*$' '", manifest, "'; then printf 1; else printf 0; fi"
+            "if grep -qE '\\.", name, "[[:space:]]*$' '", manifest, "' 2>/dev/null; then printf 1; else printf 0; fi"
         );
         bytes memory out = vm.ffi(cmds);
         return out.length == 1 && out[0] == "1";
