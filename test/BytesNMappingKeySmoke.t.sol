@@ -81,7 +81,7 @@ contract BytesNMappingKeySmokeTest is Test, YulTestBase {
     function testFuzzHelperResultKeyIsSolidity(uint256 value) public {
         (bool ok,) = smoke.call(abi.encodeWithSignature("setValueViaHelper(uint256)", value));
         assertTrue(ok);
-        _assertValueAt(SELECTOR, value);
+        _assertValueAt(bytes4(0x0badf00d), value);
     }
 
     /// `narrowBytes 4 word` keeps the high four bytes, like Solidity's `bytes4(bytes32(word))`.
@@ -89,6 +89,25 @@ contract BytesNMappingKeySmokeTest is Test, YulTestBase {
         (bool ok,) = smoke.call(abi.encodeWithSignature("setValueNarrowed(uint256,uint256)", word, value));
         assertTrue(ok);
         _assertValueAt(bytes4(bytes32(word)), value);
+    }
+
+    /// A `Bytes4` constant returns like Solidity's `bytes4`: left-aligned in the ABI word.
+    function testConstantReturnIsSolidity() public {
+        (bool ok, bytes memory out) = smoke.call(abi.encodeWithSignature("selectorConstant()"));
+        assertTrue(ok);
+        assertEq(out, abi.encode(SELECTOR));
+        assertEq(abi.decode(out, (bytes4)), bytes4(0x12345678));
+    }
+
+    /// `key == selector` compares against the left-aligned constant.
+    function testFuzzConstantComparisonIsSolidity(bytes4 other) public {
+        vm.assume(other != SELECTOR);
+        (bool ok, bytes memory out) = smoke.call(abi.encodeWithSignature("isSelector(bytes4)", SELECTOR));
+        assertTrue(ok);
+        assertTrue(abi.decode(out, (bool)));
+        (ok, out) = smoke.call(abi.encodeWithSignature("isSelector(bytes4)", other));
+        assertTrue(ok);
+        assertFalse(abi.decode(out, (bool)));
     }
 
     function testFuzzNestedSlotIsSolidity(bytes4 key, address owner, uint256 value) public {

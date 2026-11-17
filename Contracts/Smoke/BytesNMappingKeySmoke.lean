@@ -69,7 +69,7 @@ verity_contract BytesNMappingKeySmoke where
     setMappingN valueOf [copied] value
 
   function pure selectorOf () : Bytes4 := do
-    return 0x12345678
+    return 0x0badf00d
 
   -- The CEI check counts an internal helper call as an interaction.
   function allow_post_interaction_writes setValueViaHelper (value : Uint256) : Unit := do
@@ -78,6 +78,13 @@ verity_contract BytesNMappingKeySmoke where
 
   function setValueNarrowed (word : Uint256, value : Uint256) : Unit := do
     setMappingN valueOf [narrowBytes 4 word] value
+
+  -- Other compiled uses of a `BytesN` constant: ABI return and comparison.
+  function selectorConstant () : Bytes4 := do
+    return selector
+
+  function isSelector (key : Bytes4) : Bool := do
+    return key == selector
 
 /-! ## Slot layout agrees with Solidity (interpretation only) -/
 
@@ -133,6 +140,7 @@ theorem getValue_other_after_setValue (s : ContractState) (key key' : Bytes4)
 
 private def keyA : Bytes4 := 0x12345678
 private def keyB : Bytes4 := 0x12345679
+private def keyHelper : Bytes4 := 0x0badf00d
 private def owner : Address := (0xabc : Address)
 
 private def bytesNRun : ContractResult (Uint256 × Uint256 × Uint256 × Uint256 × Uint256) :=
@@ -151,7 +159,8 @@ example : bytesNRun.getValue? =
     some ((1000 : Uint256), (0 : Uint256), (10 : Uint256), (42 : Uint256), (0 : Uint256)) := by
   decide +kernel
 
-/-- Every key source lands on the entry of the parameter key `0x12345678`. -/
+/-- Every key source lands on the entry of the parameter key it denotes
+(`0x12345678`, or `0x0badf00d` for the helper). -/
 private def keySourcesRun : ContractResult (List Uint256) :=
   (do
     BytesNMappingKeySmoke.setValueAtSelector 1
@@ -159,7 +168,7 @@ private def keySourcesRun : ContractResult (List Uint256) :=
     BytesNMappingKeySmoke.setValueViaLocal keyA 2
     let b ← BytesNMappingKeySmoke.getValue keyA
     BytesNMappingKeySmoke.setValueViaHelper 3
-    let c ← BytesNMappingKeySmoke.getValue keyA
+    let c ← BytesNMappingKeySmoke.getValue keyHelper
     BytesNMappingKeySmoke.setValueNarrowed
       (Verity.Core.Uint256.ofNat (0x12345678 * 2 ^ 224 + 0xdead)) 4
     let d ← BytesNMappingKeySmoke.getValue keyA
@@ -168,6 +177,14 @@ private def keySourcesRun : ContractResult (List Uint256) :=
     return [a, b, c, d, t] : Contract _).run Verity.defaultState
 
 example : keySourcesRun.getValue? = some [1, 2, 3, 4, 5] := by
+  decide +kernel
+
+example : (BytesNMappingKeySmoke.selectorConstant.run Verity.defaultState).getValue? =
+    some keyA := by
+  decide +kernel
+
+example : ((BytesNMappingKeySmoke.isSelector keyA).run Verity.defaultState).getValue? = some true ∧
+    ((BytesNMappingKeySmoke.isSelector keyB).run Verity.defaultState).getValue? = some false := by
   decide +kernel
 
 /-! ## Rejected: bare numeric literal keys -/
