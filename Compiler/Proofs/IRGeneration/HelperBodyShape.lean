@@ -41,7 +41,7 @@ shape of `stmtTouchesUnsupportedHelperSurface`: unsupported wrappers and ADT
 matches are rejected at the head instead of recursively inspected. -/
 def stmtUsesReturnFamily : Stmt → Bool
   | .return _ | .returnValues _ | .returnArray _ | .returnBytes _
-  | .returnStorageWords _ | .returnCodeData _ | .stop => true
+  | .returnStorageWords _ | .returnCodeData _ | .returnReturndata | .stop => true
   | .unsafeBlock _ _ | .unsafeYul _ | .matchAdt _ _ _ => true
   | .ite _ thenBranch elseBranch =>
       stmtListUsesReturnFamily thenBranch ||
@@ -71,7 +71,7 @@ def exprUsesInternalHelperCall (expr : Expr) : Bool :=
 /-- Node-local classifier for helper-body shapes that can halt the caller, or
 whose stop behavior is not summarized at the N1a boundary. -/
 def stmtUsesStopBoundaryNode : Stmt → Bool
-  | .stop => true
+  | .stop | .returnReturndata => true
   | .internalCall _ _ | .internalCallAssign _ _ _ => true
   | .unsafeBlock _ _ | .unsafeYul _ | .matchAdt _ _ _ => true
   | stmt =>

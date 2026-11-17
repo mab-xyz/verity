@@ -832,7 +832,7 @@ def stmtEffectSummary (helperEffects : String → EffectSummary) : Stmt → Effe
       { readsStorage := hasMask (exprSurfaceMask o ||| exprSurfaceMask v) bitStateRead
         touchesMemory := true }
   | .calldatacopy _ _ _ | .returndataCopy _ _ _
-  | .returnValues _ | .returnBytes _ | .returnArray _ | .returnCodeData _ =>
+  | .returnValues _ | .returnBytes _ | .returnArray _ | .returnCodeData _ | .returnReturndata =>
       { touchesMemory := true }
   | .returnStorageWords _ =>
       { readsStorage := true, touchesMemory := true }

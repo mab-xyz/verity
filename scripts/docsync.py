@@ -851,6 +851,7 @@ INTERPRETER_FEATURE_BOUNDARY_CATALOG = CategoryNoteEntry(
                 "rawLog",
                 "externalCallBind",
                 "ecm",
+                "returnReturndata",
             ),
             "not_modeled",
             "not-modeled proof-boundary",
@@ -870,6 +871,12 @@ INTERPRETER_FEATURE_BOUNDARY_CATALOG = CategoryNoteEntry(
         "Fully not-modeled features currently include `keccak256`, low-level call plumbing "
         "(`call`, `staticcall`, `delegatecall`), event emission (`rawLog`), and external call modules "
         "(`externalCallBind`, `ecm`).",
+        "`returnReturndata`, the success twin of `revertReturndata` (`returndatacopy(0, 0, "
+        "returndatasize())` then `return(0, returndatasize())`), is not modeled either: the "
+        "proof-oriented source semantics and the compiler-free denotation treat it as an "
+        "unsupported statement, every proof fragment excludes it as an unsupported low-level "
+        "surface, and the executable `Contracts.returnReturndata` is a no-op because the "
+        "`Contract` monad cannot end a call with a success payload.",
     ),
     out_of_sync_message=(
         "{path} is out of sync with interpreter proof-boundary categories: missing `{snippet}`"
