@@ -55,7 +55,7 @@ SPEC = {'check_only_paths': ['.github/workflows/**',
                     'lake-manifest.json',
                     'lean-toolchain',
                     'foundry.toml'],
- 'expected_push_branches': ['main'],
+ 'expected_push_branches': ['main', 'ours'],  # ours: mab-xyz fork default branch
  'expected_trigger_keys': ['schedule', 'push', 'pull_request', 'workflow_dispatch'],
  'require_workflow_dispatch': True,
  'expected_jobs': ['closed-pr-cleanup',

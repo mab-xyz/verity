@@ -70,7 +70,8 @@
     "foundry.toml"
   ],
   "expected_push_branches": [
-    "main"
+    "main",
+    "ours"
   ],
   "expected_trigger_keys": [
     "schedule",
