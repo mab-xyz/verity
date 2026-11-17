@@ -869,6 +869,10 @@ jobs:
             Contracts.StringErrorSmokeContract
             Contracts.StringEventSmoke
             Contracts.StringSmoke
+            Contracts.Smoke.BytesNMappingKeySmoke
+            Contracts.Smoke.PayableFallbackSmoke
+            Contracts.Smoke.SpecialEntrypointSmoke
+            Contracts.Smoke.StructBytesMemberCopySmoke
           )
           lake build "${smoke_modules[@]}" >/dev/null
           mkdir -p compiler/yul-smoke
@@ -933,6 +937,10 @@ jobs:
             Contracts.StringErrorSmokeContract
             Contracts.StringEventSmoke
             Contracts.StringSmoke
+            Contracts.Smoke.BytesNMappingKeySmoke
+            Contracts.Smoke.PayableFallbackSmoke
+            Contracts.Smoke.SpecialEntrypointSmoke
+            Contracts.Smoke.StructBytesMemberCopySmoke
           )
           mkdir -p compiler/yul-patched-smoke
           for module in "${smoke_modules[@]}"; do
