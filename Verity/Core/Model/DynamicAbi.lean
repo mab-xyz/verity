@@ -964,9 +964,8 @@ private theorem externalWordAt?_aligned_mod {selector : Nat} {calldata : List Na
     omega
   have hword : calldataloadWord selector calldata (4 + 32 * idx) =
       calldata.getD idx 0 % Compiler.Constants.evmModulus := by
-    have h0 : ¬ 4 + 32 * idx = 0 := by omega
     have h4 : ¬ 4 + 32 * idx < 4 := by omega
-    simp [calldataloadWord, h0, h4, Nat.mul_div_cancel_left]
+    simp [calldataloadWord, h4]
   simp only [externalWordAt?, hbound, and_self, ↓reduceIte, hword]
 
 theorem paramHeadSize_of_scalarHead {ty : ParamType} (hscalar : ScalarHeadParamType ty) :

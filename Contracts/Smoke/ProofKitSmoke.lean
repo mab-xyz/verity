@@ -36,8 +36,7 @@ theorem hashWords_is_keccak (a b : Uint256) (s : ContractState) :
     · intro i hi
       simp at hi
       have h32 : (32 : Uint256).val = 32 := rfl
-      have h0' : (0 : Uint256).val = 0 := rfl
-      interval_cases i <;> simp [h32, h0']
+      interval_cases i <;> simp [h32]
   exact ⟨s2, by rw [← hk]; rfl⟩
 
 end Contracts.Smoke.ProofKitSmoke
