@@ -1300,6 +1300,12 @@ eagerly at entry would not match either, since solc never rejects an unread
 member of a calldata composite. `test/ScalarAbiValidationSmoke.t.sol` pins the
 current behaviour (`accountOfPair`).
 
+Remaining divergence: a dirty element of a dynamic-array parameter. The
+element helpers return the raw word, in the compiled code and in the source
+semantics. Narrow `uintN`/`intN`/`bytesN` elements are then masked by the macro;
+`address` and `bool` elements are not, and no element is validated. solc reverts
+when such an element is read; Verity continues with the masked, or raw, word.
+
 ### Imported scalar ABI entry guards
 
 Scalar `uintN`, address and bool parameters also receive importer entry checks
