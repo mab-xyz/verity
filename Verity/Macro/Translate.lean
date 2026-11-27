@@ -826,6 +826,47 @@ private def storageFieldAdtName? (field : StorageFieldDecl) : Option String :=
       | .scalar (.adt adtName _) => some adtName
       | _ => none
 
+/-- `revertBytes data`: revert with the `Bytes` of a `(Bool, Bytes)` typed-interface return. -/
+private def translateRevertBytesStmt (locals : Array TypedLocal) (name : Term) :
+    CommandElabM Term := do
+  let some localName := memoryBytesLocal? locals name
+    | throwErrorAt name "revertBytes expects the Bytes of a (Bool, Bytes) typed-interface return"
+  let lengthWord := memoryArrayDataOffsetName (Compiler.Modules.Calls.abiReturnBytesArrayName localName)
+  `(Compiler.CompilationModel.Stmt.ecm Compiler.Modules.Calls.revertMemoryBytesModule
+      [Compiler.CompilationModel.Expr.add
+         (Compiler.CompilationModel.Expr.localVar $(strTerm lengthWord))
+         (Compiler.CompilationModel.Expr.literal 32),
+       $(← memoryBytesLengthExpr localName)])
+
+/-- A void typed-interface call in statement position: the ABI-frame call module for
+`isAbiFrameTypedInterface` methods, otherwise the no-return ECM (selector + args call,
+failure-returndata bubbled, but no returndatasize check and no return decode). -/
+private def translateVoidTypedInterfaceCallStmt
+    (fields : Array StorageFieldDecl)
+    (constDecls : Array ConstantDecl)
+    (immutableDecls : Array ImmutableDecl)
+    (externalDecls : Array ExternalDecl)
+    (params : Array ParamDecl)
+    (locals : Array TypedLocal)
+    (ext : ExternalDecl) (target : Term) (argTerms : Array Term) (selector : Nat) :
+    CommandElabM Term := do
+  let targetExpr ← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals target
+  if isAbiFrameTypedInterface ext.params ext.returnTys then
+    let (shapes, words) ← translateAbiFrameCallArgs fields constDecls immutableDecls
+      externalDecls params locals ext.params argTerms
+    return ← abiFrameCallStmt ext selector targetExpr shapes words
+      (← `(Compiler.Modules.Calls.AbiCallReturnShape.words []))
+  -- One expression per ABI word (a static tuple argument contributes one per component).
+  let argExprs ← translateLinkedExternalCallArgs fields constDecls immutableDecls params locals argTerms
+    (translateExpr? := some (translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals))
+  let isStaticTerm ← if ext.isView then `(true) else `(false)
+  `(Compiler.CompilationModel.Stmt.ecm
+      (Compiler.Modules.Calls.noReturnModule
+        $(natTerm selector)
+        $(natTerm argExprs.size)
+        $isStaticTerm)
+      [ $targetExpr, $[$argExprs],* ])
+
 private def translateEffectStmt
     (fields : Array StorageFieldDecl)
     (constDecls : Array ConstantDecl)
@@ -1177,14 +1218,7 @@ private def translateEffectStmt
           (Compiler.CompilationModel.Expr.localVar $(strTerm (toString ptr.getId)))
           (Compiler.CompilationModel.Expr.localVar $(strTerm (toString len.getId))))
   | `(term| revertBytes $name:term) =>
-      let some localName := memoryBytesLocal? locals name
-        | throwErrorAt name "revertBytes expects the Bytes of a (Bool, Bytes) typed-interface return"
-      let lengthWord := memoryArrayDataOffsetName (Compiler.Modules.Calls.abiReturnBytesArrayName localName)
-      `(Compiler.CompilationModel.Stmt.ecm Compiler.Modules.Calls.revertMemoryBytesModule
-          [Compiler.CompilationModel.Expr.add
-             (Compiler.CompilationModel.Expr.localVar $(strTerm lengthWord))
-             (Compiler.CompilationModel.Expr.literal 32),
-           $(← memoryBytesLengthExpr localName)])
+      translateRevertBytesStmt locals name
   | `(term| returnValues $values:term) =>
       let valueExprs ← expectExprList fields constDecls immutableDecls params locals values
         (some (translateDeclaredPureExpr
@@ -1259,27 +1293,12 @@ private def translateEffectStmt
           $(strTerm memberName)
           $(← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals value))
   | _ =>
-      -- void typed interface call in statement position lowers to the
-      -- no-return ECM (selector + args call, failure-returndata bubbled, but
-      -- no returndatasize check and no return decode).
+      -- void typed interface call in statement position
+      -- (`translateVoidTypedInterfaceCallStmt`).
       match ← resolveTypedInterfaceCall? fields constDecls immutableDecls externalDecls params locals stx with
       | some (ext, target, argTerms, none, selector) =>
-          let targetExpr ← translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals target
-          if isAbiFrameTypedInterface ext.params ext.returnTys then
-            let (shapes, words) ← translateAbiFrameCallArgs fields constDecls immutableDecls
-              externalDecls params locals ext.params argTerms
-            return ← abiFrameCallStmt ext selector targetExpr shapes words
-              (← `(Compiler.Modules.Calls.AbiCallReturnShape.words []))
-          -- One expression per ABI word (a static tuple argument contributes one per component).
-          let argExprs ← translateLinkedExternalCallArgs fields constDecls immutableDecls params locals argTerms
-            (translateExpr? := some (translateDeclaredPureExpr fields constDecls immutableDecls externalDecls params locals))
-          let isStaticTerm ← if ext.isView then `(true) else `(false)
-          `(Compiler.CompilationModel.Stmt.ecm
-              (Compiler.Modules.Calls.noReturnModule
-                $(natTerm selector)
-                $(natTerm argExprs.size)
-                $isStaticTerm)
-              [ $targetExpr, $[$argExprs],* ])
+          translateVoidTypedInterfaceCallStmt fields constDecls immutableDecls externalDecls
+            params locals ext target argTerms selector
       | some (_, _, _, some retTy, _) =>
           throwErrorAt stx
             s!"interface call returns {renderValueType retTy}; bind it with `let ... ← ...`"
